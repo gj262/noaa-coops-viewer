@@ -25,10 +25,13 @@ const webpackConfig = {
     app: [
       paths.base(config.dir_client) + '/app.js'
     ],
+    logging: [
+      paths.base(config.dir_client) + '/utils/logging.js'
+    ],
     vendor: config.compiler_vendor
   },
   output: {
-    filename: `[name].[${config.compiler_hash_type}].js`,
+    filename: `[name].js`,
     path: paths.base(config.dir_dist),
     publicPath: config.compiler_public_path
   },
