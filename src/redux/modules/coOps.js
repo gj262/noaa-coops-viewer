@@ -19,7 +19,7 @@ export const fetchData = () => {
 }
 const fetchingData = () => ({ type: FETCHING_DATA })
 const dataFetched = (fetchedData) => ({ type: DATA_FETCHED, payload: fetchedData })
-const fetchError = (error) => ({ type: FETCH_ERROR, payload: error })
+const fetchError = (year, message) => ({ type: FETCH_ERROR, payload: [year, message] })
 const toggleYearSelection = (year) => ({ type: TOGGLE_YEAR_SELECTION, payload: year })
 export const toggleYear = (year) => {
   return (dispatch, getState) => {
@@ -55,13 +55,13 @@ function fetchOne(dispatch, year, station, done) {
     `/api/datagetter?begin_date=${begin.format('YYYYMMDD HH:mm')}&end_date=${end.format('YYYYMMDD HH:mm')}&station=${station}&product=water_temperature&units=english&time_zone=lst&application=gj262@github&format=json&interval=h`
   ).then(response => {
     if (!response.ok || response.status >= 400) {
-      dispatch(fetchError(new Error('Bad response from server')))
+      dispatch(fetchError(year, 'Bad response from server.'))
       done()
     }
     return response.json()
   }).then(json => {
     if ('error' in json) {
-      dispatch(fetchError(new Error('Bad response from server: ' + json.error.message)))
+      dispatch(fetchError(year, json.error.message))
       done()
     }
     done(cleanseData(json.data))
@@ -96,7 +96,9 @@ export default createReducer(
     isFetching: false,
     years: [2015, 2014],
     station: '9414290',
-    data: []
+    data: [],
+    errors: [],
+    errorInstance: 0
   },
   // reducers
   {
@@ -106,8 +108,16 @@ export default createReducer(
     [DATA_FETCHED]: (state, fetchedData) => {
       return Object.assign({}, state, { isFetching: false, data: state.data.concat(fetchedData) })
     },
-    [FETCH_ERROR]: (state, error) => {
-      return Object.assign({}, state, { isFetching: false, errors: state.errors.concat(error) })
+    [FETCH_ERROR]: (state, [year, message]) => {
+      return Object.assign({}, state, {
+        isFetching: false,
+        errorInstance: state.errorInstance + 1,
+        errors: state.errors.concat({
+          instance: state.errorInstance,
+          year: year,
+          message: message
+        })
+      })
     },
     [TOGGLE_YEAR_SELECTION]: (state, year) => {
       var years

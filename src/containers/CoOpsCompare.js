@@ -9,7 +9,8 @@ import YearSelector from 'components/YearSelector'
 const mapStateToProps = (state) => ({
   isFetching: state.coOps.isFetching,
   data: state.coOps.data,
-  years: state.coOps.years
+  years: state.coOps.years,
+  errors: state.coOps.errors
 })
 
 class CoOpsCompare extends React.Component {
@@ -20,7 +21,8 @@ class CoOpsCompare extends React.Component {
     toggleYear: React.PropTypes.func,
     isFetching: React.PropTypes.bool,
     data: React.PropTypes.array,
-    years: React.PropTypes.array
+    years: React.PropTypes.array,
+    errors: React.PropTypes.array
   }
 
   static defaultProps = {
@@ -67,11 +69,13 @@ class CoOpsCompare extends React.Component {
     var bucket_idx = 0;
     dataset.data.forEach(datum => {
       var referenceDate = this.state.referenceYear + datum.t.substr(4)
-      if (referenceDate > current_bucket_end_date) {
+      while (referenceDate > current_bucket_end_date) {
         current_bucket_end_date = begin_date.add(ms_per_bucket).format('YYYY-MM-DD HH:mm')
-        bucket_idx++;
+        if (resampled.length > 0 && resampled.length > bucket_idx) {
+          bucket_idx++;
+        }
       }
-      if (bucket_idx >= resampled.length) {
+      if (resampled.length <= bucket_idx) {
         resampled.push({ t: datum.t, x: referenceDate, data: [] })
       }
       resampled[bucket_idx].data.push(parseFloat(datum.v))
@@ -88,8 +92,17 @@ class CoOpsCompare extends React.Component {
   }
 
   render () {
-    return this.state.chartData ? (
+    return (
       <div>
+        {this.props.errors.map(
+          error =>
+            (
+                <div key={error.instance} className='alert alert-warning' role='alert'>
+                  Could not load data for {error.year}. {error.message}
+                </div>
+            )
+        )}
+        {this.state.chartData ? (
         <VictoryChart
           width={1024}
           height={500}
@@ -119,9 +132,10 @@ class CoOpsCompare extends React.Component {
               style={{data: {stroke: dataset.color}, label: {color: dataset.color}}} />
             ))}
         </VictoryChart>
+        ) : null}
         <YearSelector selection={this.props.years} end={1990} toggleYear={this.props.toggleYear} />
       </div>
-    ) : null
+    );
   }
 
   makeTicks() {
