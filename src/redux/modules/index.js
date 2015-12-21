@@ -1,8 +1,8 @@
 import { combineReducers } from 'redux'
 import { routeReducer } from 'redux-simple-router'
-import counter from './counter'
+import coOps from './coOps'
 
 export default combineReducers({
-  counter,
+  coOps,
   router: routeReducer
 })

@@ -14,6 +14,10 @@
     "__DEBUG_NW__" : false
   },
   "rules": {
-    "semi" : [2, "never"]
+    "semi" : 0,
+    "brace-style" : 0,
+    "no-multi-spaces" : 0,
+    "key-spacing" : 0,
+    "space-before-function-paren" : 0
   }
 }

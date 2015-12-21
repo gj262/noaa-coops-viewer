@@ -1,0 +1,138 @@
+import React from 'react'
+import LineChart from 'components/LineChart'
+import { connect } from 'react-redux'
+import { actions as coOpsActions } from 'redux/modules/coOps'
+import Moment from 'moment'
+
+const mapStateToProps = (state) => ({
+  isFetching: state.coOps.isFetching,
+  data: state.coOps.data
+})
+
+class CoOpsCompare extends React.Component {
+  static propTypes = {
+    sampleCount: React.PropTypes.number,
+    linePalette: React.PropTypes.array,
+    fetchData: React.PropTypes.func,
+    isFetching: React.PropTypes.bool,
+    data: React.PropTypes.array
+  }
+
+  static defaultProps = {
+    sampleCount: 50,
+    linePalette: [ '#984447', '#add9f4', '#476c9b', '#468c98', '#101419' ]
+  }
+
+  constructor() {
+    super()
+    this.state = {
+    }
+  }
+
+  componentWillMount() {
+    this.props.fetchData()
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (this.props.data === nextProps.data) {
+      return
+    }
+    var resampled = nextProps.data.map(dataset => this.resampleData(dataset))
+    var datasets = resampled.map((dataset, idx) => {
+      return {
+        label: dataset.year,
+        borderColor: this.props.linePalette[idx % this.props.linePalette.length],
+        data: dataset.data.map(datum => ({x: datum.x, y: datum.v})),
+        _realTime: dataset.data.map(datum => datum.t)
+      }
+    })
+
+    this.setState({
+      chartData: {
+        labels: this.makeLabels(resampled[0].data),
+        datasets: datasets
+      },
+      chartOptions: {
+        elements: {
+          line: {
+            fill: false
+          }
+        },
+        scales: {
+          xAxes: [{
+            display: true,
+            type: 'linear',
+            position: 'bottom',
+            gridLines: {
+              // offsetGridLines: true
+            },
+            ticks: {
+              count: 12,
+              userCallback: function(tickValue, index, tickArray) {
+                // return Moment([2000, 0, 1]).add(Math.floor(tickValue * 12), 'month').format('MMMM');
+                return tickValue.toFixed(4);
+              }
+            }
+          }]
+        },
+        tooltips: {
+          enabled: true,
+          callbacks: {
+            title: (xLabelValue, value, dataIdx, datasetIdx, chartData) => {
+              return [chartData.datasets[datasetIdx]._realTime[dataIdx],
+                      chartData.datasets[datasetIdx].data[dataIdx].x]
+            },
+            label: (xLabelValue, value, dataIdx, datasetIdx, chartData) => {
+              return value.toFixed(2)
+            }
+          }
+        }
+      }
+    })
+  }
+
+  resampleData(dataset) {
+    dataset = Object.assign({}, dataset);
+    var sample_date = Moment(dataset.data[0].t, 'YYYY-MM-DD HH:mm')
+    var begin_date = sample_date.clone().startOf('year')
+    var end_date = sample_date.clone().endOf('year')
+    var ms_in_year = end_date - begin_date;
+    var ms_per_bucket = ms_in_year / this.props.sampleCount;
+    var resampled = [];
+    var current_bucket_end_date = begin_date.add(ms_per_bucket).format('YYYY-MM-DD HH:mm')
+    var bucket_idx = 0;
+    dataset.data.forEach(datum => {
+      if (datum.t >= current_bucket_end_date) {
+        current_bucket_end_date = begin_date.add(ms_per_bucket).format('YYYY-MM-DD HH:mm')
+        bucket_idx++;
+      }
+      if (bucket_idx >= resampled.length) {
+        resampled.push([])
+      }
+      resampled[bucket_idx].push(datum)
+    })
+    dataset.data = resampled.map((bucket, idx) => {
+      return {
+        t: bucket[0].t,
+        x: ((idx * ms_per_bucket) / ms_in_year).toFixed(2),
+        v: bucket.reduce((total, datum) => total + parseFloat(datum.v), 0) / bucket.length
+      }
+    });
+
+    return dataset
+  }
+
+  makeLabels(data) {
+    return data.map(datum => datum.t)
+  }
+
+  render () {
+    return this.state.chartData ? (
+      <div>
+        <LineChart {...this.props} data={this.state.chartData} options={this.state.chartOptions} />
+      </div>
+    ) : null
+  }
+}
+
+export default connect(mapStateToProps, coOpsActions)(CoOpsCompare)

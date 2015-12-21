@@ -5,9 +5,10 @@ const debug = require('debug')('kit:bin:compile')
 
 debug('Create webpack compiler.')
 
-const compiler = require('webpack')(require('../build/webpack'))
+const webpackConfig = require('../build/webpack')
+const compiler = require('webpack')(webpackConfig)
 
-compiler.run(function (err, stats) {
+const handler = function (err, stats) {
   const jsonStats = stats.toJson()
 
   debug('Webpack compile completed.')
@@ -28,4 +29,10 @@ compiler.run(function (err, stats) {
   } else {
     debug('No errors / warnings encountered.')
   }
-})
+};
+
+if (config.compiler_watch) {
+  compiler.watch({}, handler)
+} else {
+  compiler.run(handler)
+}
