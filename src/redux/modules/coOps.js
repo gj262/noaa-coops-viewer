@@ -127,7 +127,7 @@ export default createReducer(
       else {
         years = state.years.filter(keep => keep !== year)
       }
-      return Object.assign({}, state, { years: years })
+      return Object.assign({}, state, { years: years, errors: [] })
     }
   }
 )

@@ -1,6 +1,8 @@
 import React from 'react'
 import Moment from 'moment'
 
+import './YearSelector.scss'
+
 export default class YearSelector extends React.Component {
   static propTypes = {
     end: React.PropTypes.number.isRequired,
@@ -12,10 +14,11 @@ export default class YearSelector extends React.Component {
     var years = this.getYears()
     return (
         <div>
-        <ul>
+        <ul className='years'>
         {years.map(year => (
             <li key={year}>
             {year}
+            &nbsp;
             <input type='checkbox' checked={this.isChecked(year)} onChange={this.yearSelect.bind(this, year)} />
             </li>
         ))}
