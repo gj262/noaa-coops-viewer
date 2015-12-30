@@ -56,19 +56,20 @@ function fetchOne(dispatch, year, station, done) {
   ).then(response => {
     if (!response.ok || response.status >= 400) {
       dispatch(fetchError(year, 'Bad response from server.'))
-      done()
+      return done()
     }
     return response.json()
   }).then(json => {
     if ('error' in json) {
       dispatch(fetchError(year, json.error.message))
-      done()
+      return done()
     }
     done(cleanseData(json.data))
   })
 }
 
 function cleanseData(data) {
+  data = data || []
   return data.filter(datum => {
     if ('t' in datum && 'v' in datum && datum.v) {
       // // TEST
@@ -116,7 +117,8 @@ export default createReducer(
           instance: state.errorInstance,
           year: year,
           message: message
-        })
+        }),
+        years: state.years.filter(keep => keep !== year)
       })
     },
     [TOGGLE_YEAR_SELECTION]: (state, year) => {
@@ -127,7 +129,7 @@ export default createReducer(
       else {
         years = state.years.filter(keep => keep !== year)
       }
-      return Object.assign({}, state, { years: years, errors: [] })
+      return Object.assign({}, state, { years: years })
     }
   }
 )
