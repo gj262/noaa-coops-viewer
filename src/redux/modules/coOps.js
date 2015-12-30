@@ -11,12 +11,6 @@ const TOGGLE_YEAR_SELECTION = 'TOGGLE_YEAR_SELECTION'
 
 // Actions Creators
 
-export const fetchData = () => {
-  return (dispatch, getState) => {
-    dispatch(fetchingData())
-    fetchAllData(dispatch, getState)
-  }
-}
 const fetchingData = () => ({ type: FETCHING_DATA })
 const dataFetched = (fetchedData) => ({ type: DATA_FETCHED, payload: fetchedData })
 const fetchError = (year, message) => ({ type: FETCH_ERROR, payload: [year, message] })
@@ -26,45 +20,67 @@ export const toggleYear = (year) => {
     dispatch(toggleYearSelection(year))
     if (!getState().coOps.data.find(data => data.year === year)) {
       dispatch(fetchingData())
-      fetchOne(dispatch, year, getState().coOps.station, (data) => {
+      fetchOne(year, getState().coOps.station, (data, error) => {
         if (data) {
           dispatch(dataFetched({ year: year, data: data }))
+        }
+        else if (error) {
+          dispatch(error)
         }
       })
     }
   }
 }
+const prefetchData = () => {
+  var year = Moment()
+  return (dispatch, getState) => {
+    prefetchFromYear(year, dispatch, getState)
+  }
+}
+
+function prefetchFromYear(year, dispatch, getState) {
+  if (getState().coOps.errors.length === 0) {
+    dispatch(fetchingData())
+    fetchOne(year.year(), getState().coOps.station, (data, error) => {
+      if (data) {
+        dispatch(dataFetched({ year: year.year(), data: data }))
+        prefetchFromYear(year.subtract(1, 'y'), dispatch, getState)
+      }
+      else if (error) {
+        var [, message] = error.payload
+        if (message.indexOf('No data was found') !== -1) {
+          // year.year() + ' is the earliest'
+        }
+        else {
+          // other kind of error
+          dispatch(error)
+          prefetchFromYear(year.subtract(1, 'y'), dispatch, getState)
+        }
+      }
+    })
+  }
+}
 
 export const actions = {
-  fetchData,
+  prefetchData,
   toggleYear
 }
 
-function fetchAllData(dispatch, getState) {
-  getState().coOps.years.forEach((year, idx) => {
-    fetchOne(dispatch, year, getState().coOps.station, (data) => {
-      dispatch(dataFetched({ year: year, data: data }))
-    })
-  })
-}
-
-function fetchOne(dispatch, year, station, done) {
+function fetchOne(year, station, done) {
   var begin = Moment(year + '-01-01 00:00', 'YYYY-MM-DD HH:mm');
   var end = begin.clone().endOf('year')
   fetch(
     `/api/datagetter?begin_date=${begin.format('YYYYMMDD HH:mm')}&end_date=${end.format('YYYYMMDD HH:mm')}&station=${station}&product=water_temperature&units=english&time_zone=lst&application=gj262@github&format=json&interval=h`
   ).then(response => {
     if (!response.ok || response.status >= 400) {
-      dispatch(fetchError(year, 'Bad response from server.'))
-      return done()
+      return done(null, fetchError(year, 'Bad response from server.'))
     }
     return response.json()
   }).then(json => {
     if ('error' in json) {
-      dispatch(fetchError(year, json.error.message))
-      return done()
+      return done(null, fetchError(year, json.error.message))
     }
-    done(cleanseData(json.data))
+    done(cleanseData(json.data), null)
   })
 }
 
@@ -95,7 +111,7 @@ export default createReducer(
   // initial state
   {
     isFetching: false,
-    years: [2015, 2014],
+    years: [Moment().year(), Moment().subtract(1, 'y').year()],
     station: '9414290',
     data: [],
     errors: [],

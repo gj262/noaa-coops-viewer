@@ -17,7 +17,7 @@ class CoOpsCompare extends React.Component {
   static propTypes = {
     sampleCount: React.PropTypes.number,
     linePalette: React.PropTypes.array,
-    fetchData: React.PropTypes.func,
+    prefetchData: React.PropTypes.func,
     toggleYear: React.PropTypes.func,
     isFetching: React.PropTypes.bool,
     data: React.PropTypes.array,
@@ -38,7 +38,7 @@ class CoOpsCompare extends React.Component {
   }
 
   componentWillMount() {
-    this.props.fetchData()
+    this.props.prefetchData()
   }
 
   componentWillReceiveProps(nextProps) {
@@ -92,6 +92,7 @@ class CoOpsCompare extends React.Component {
   }
 
   render () {
+    var orderedYears = this.props.data.sort((a, b) => b.year - a.year).map(data => data.year);
     return (
       <div>
         {this.props.errors.map(
@@ -133,7 +134,7 @@ class CoOpsCompare extends React.Component {
             ))}
         </VictoryChart>
         ) : null}
-        <YearSelector selection={this.props.years} end={1990} toggleYear={this.props.toggleYear} />
+        <YearSelector selection={this.props.years} years={orderedYears} toggleYear={this.props.toggleYear} />
       </div>
     );
   }

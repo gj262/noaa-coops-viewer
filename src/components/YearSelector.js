@@ -1,21 +1,19 @@
 import React from 'react'
-import Moment from 'moment'
 
 import './YearSelector.scss'
 
 export default class YearSelector extends React.Component {
   static propTypes = {
-    end: React.PropTypes.number.isRequired,
+    years: React.PropTypes.array.isRequired,
     selection: React.PropTypes.array.isRequired,
     toggleYear: React.PropTypes.func
   }
 
   render () {
-    var years = this.getYears()
     return (
         <div>
         <ul className='years'>
-        {years.map(year => (
+        {this.props.years.map(year => (
             <li key={year}>
             {year}
             &nbsp;
@@ -25,16 +23,6 @@ export default class YearSelector extends React.Component {
         </ul>
         </div>
     )
-  }
-
-  getYears() {
-    var years = [];
-    var year = Moment().get('year')
-    while (year > this.props.end) {
-      years.push(year)
-      year--
-    }
-    return years
   }
 
   isChecked(year) {
