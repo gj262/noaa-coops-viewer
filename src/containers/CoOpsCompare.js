@@ -46,10 +46,10 @@ class CoOpsCompare extends React.Component {
       return
     }
     var datasets = nextProps.data
-        .filter(dataset => nextProps.years.indexOf(dataset.year) !== -1)
         .map((dataset, idx) => {
           dataset = this.resampleAndMapToSameScale(dataset);
           dataset.color = this.props.linePalette[idx % this.props.linePalette.length];
+          dataset.visible = nextProps.years.indexOf(dataset.year) !== -1;
           return dataset;
         })
     this.setState({
@@ -128,9 +128,9 @@ class CoOpsCompare extends React.Component {
               key={dataset.year}
               interpolation='cardinal'
               animate={{velocity: 0.02}}
-              label={dataset.year}
+              label={dataset.visible ? dataset.year : ''}
               data={dataset.data}
-              style={{data: {stroke: dataset.color}, label: {color: dataset.color}}} />
+              style={{data: {stroke: dataset.color, 'stroke-width': dataset.visible ? 2 : 0}, label: {color: dataset.color}}} />
             ))}
         </VictoryChart>
         ) : null}
