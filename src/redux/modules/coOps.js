@@ -123,7 +123,7 @@ export default createReducer(
       return Object.assign({}, state, { isFetching: true, errors: [] })
     },
     [DATA_FETCHED]: (state, [year, data]) => {
-      return Object.assign({}, state, { isFetching: false, data: state.data.concat({ year: year, data: data }) })
+      return Object.assign({}, state, { isFetching: false, data: state.data.concat({ year: year, data: data, ...addStats(data) }) })
     },
     [FETCH_ERROR]: (state, [year, message]) => {
       return Object.assign({}, state, {
@@ -149,3 +149,23 @@ export default createReducer(
     }
   }
 )
+
+function addStats(data) {
+  var min = null
+  var max = null
+  var avg = 0
+
+  data.forEach(datum => {
+    if (min === null || datum.v < min) {
+      min = datum.v
+    }
+    if (max === null || datum.v > max) {
+      max = datum.v
+    }
+    avg += datum.v
+  })
+
+  avg = avg / data.length
+
+  return {min: min, max: max, avg: avg}
+}

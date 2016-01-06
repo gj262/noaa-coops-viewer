@@ -134,7 +134,7 @@ class CoOpsCompare extends React.Component {
               key={dataset.year}
               interpolation='cardinal'
               animate={{velocity: 0.02}}
-              label={dataset.visible ? dataset.year : ''}
+              label={dataset.visible ? `${dataset.year} [${dataset.min}/${dataset.avg.toFixed(2)}/${dataset.max}]` : ''}
               data={dataset.data}
               style={{data: {stroke: dataset.color, 'strokeWidth': dataset.visible ? 2 : 0}, label: {color: dataset.color}}} />
             ))}
