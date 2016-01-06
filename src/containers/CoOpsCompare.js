@@ -1,6 +1,7 @@
 import React from 'react'
 import { VictoryAxis, VictoryChart, VictoryLine } from 'victory'
-import d3 from 'd3'
+import d3_time_format from 'd3-time-format'
+import d3_scale from 'd3-scale'
 import { connect } from 'react-redux'
 import { actions as coOpsActions } from 'redux/modules/coOps'
 import Moment from 'moment'
@@ -114,8 +115,8 @@ class CoOpsCompare extends React.Component {
           width={1024}
           height={500}
           scale={{
-            x: d3.time.scale(),
-            y: d3.scale.linear()
+            x: d3_scale.time(),
+            y: d3_scale.linear()
           }}>
           <VictoryAxis
             dependentAxis
@@ -128,7 +129,7 @@ class CoOpsCompare extends React.Component {
               grid: {strokeWidth: 1}
             }}
             tickValues={this.makeTicks()}
-            tickFormat={d3.time.format('%B')}/>
+            tickFormat={d3_time_format.format('%B')}/>
           {this.state.chartData.map(dataset => (
             <VictoryLine
               key={dataset.year}
