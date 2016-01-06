@@ -1,5 +1,6 @@
 import React from 'react'
-import { VictoryAxis, VictoryChart, VictoryLine } from 'victory'
+import { VictoryAxis, VictoryChart } from 'victory'
+import { StaticVictoryLine } from 'components/StaticVictory'
 import d3_time_format from 'd3-time-format'
 import d3_scale from 'd3-scale'
 import { connect } from 'react-redux'
@@ -132,8 +133,9 @@ class CoOpsCompare extends React.Component {
             tickValues={this.makeTicks()}
             tickFormat={d3_time_format.format('%B')}/>
           {this.state.chartData.map(dataset => (
-            <VictoryLine
+            <StaticVictoryLine
               key={dataset.year}
+              visible={dataset.visible}
               interpolation='cardinal'
               animate={{velocity: 0.02}}
               label={dataset.visible ? `${dataset.year} [${dataset.min}/${dataset.avg.toFixed(2)}/${dataset.max}]` : ''}
