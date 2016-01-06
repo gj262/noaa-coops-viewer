@@ -12,7 +12,7 @@ const TOGGLE_YEAR_SELECTION = 'TOGGLE_YEAR_SELECTION'
 // Actions Creators
 
 const fetchingData = () => ({ type: FETCHING_DATA })
-const dataFetched = (fetchedData) => ({ type: DATA_FETCHED, payload: fetchedData })
+const dataFetched = (year, data) => ({ type: DATA_FETCHED, payload: [year, data] })
 const fetchError = (year, message) => ({ type: FETCH_ERROR, payload: [year, message] })
 const toggleYearSelection = (year) => ({ type: TOGGLE_YEAR_SELECTION, payload: year })
 export const toggleYear = (year) => {
@@ -22,7 +22,7 @@ export const toggleYear = (year) => {
       dispatch(fetchingData())
       fetchOne(year, getState().coOps.station, (data, error) => {
         if (data) {
-          dispatch(dataFetched({ year: year, data: data }))
+          dispatch(dataFetched(year, data))
         }
         else if (error) {
           dispatch(error)
@@ -43,7 +43,7 @@ function prefetchFromYear(year, dispatch, getState) {
     dispatch(fetchingData())
     fetchOne(year.year(), getState().coOps.station, (data, error) => {
       if (data) {
-        dispatch(dataFetched({ year: year.year(), data: data }))
+        dispatch(dataFetched(year.year(), data))
         prefetchFromYear(year.subtract(1, 'y'), dispatch, getState)
       }
       else if (error) {
@@ -122,8 +122,8 @@ export default createReducer(
     [FETCHING_DATA]: (state) => {
       return Object.assign({}, state, { isFetching: true, errors: [] })
     },
-    [DATA_FETCHED]: (state, fetchedData) => {
-      return Object.assign({}, state, { isFetching: false, data: state.data.concat(fetchedData) })
+    [DATA_FETCHED]: (state, [year, data]) => {
+      return Object.assign({}, state, { isFetching: false, data: state.data.concat({ year: year, data: data }) })
     },
     [FETCH_ERROR]: (state, [year, message]) => {
       return Object.assign({}, state, {
