@@ -33,6 +33,7 @@ class CoOpsCompare extends React.Component {
   constructor() {
     super()
     this.state = {
+      chartData: [],
       referenceYear: 2012
     }
   }
@@ -42,18 +43,23 @@ class CoOpsCompare extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (this.props.data === nextProps.data && this.props.years === nextProps.years) {
-      return
-    }
-    var datasets = nextProps.data
-        .map((dataset, idx) => {
-          dataset = this.resampleAndMapToSameScale(dataset);
-          dataset.color = this.props.linePalette[idx % this.props.linePalette.length];
-          dataset.visible = nextProps.years.indexOf(dataset.year) !== -1;
-          return dataset;
-        })
+    // Map to display data as new data is received.
+    var chartData = nextProps.data.map(dataset => {
+      var chartDataset = !this.state.chartData
+        ? null
+        : this.state.chartData.find(chartDataset => chartDataset.year === dataset.year);
+      if (!chartDataset) {
+        chartDataset = this.resampleAndMapToSameScale(dataset);
+        chartDataset.color = this.props.linePalette[dataset.year % this.props.linePalette.length];
+        chartDataset.visible = nextProps.years.indexOf(dataset.year) !== -1;
+      }
+      else {
+        chartDataset.visible = nextProps.years.indexOf(dataset.year) !== -1;
+      }
+      return chartDataset
+    })
     this.setState({
-      chartData: datasets
+      chartData: chartData
     })
   }
 
@@ -130,7 +136,7 @@ class CoOpsCompare extends React.Component {
               animate={{velocity: 0.02}}
               label={dataset.visible ? dataset.year : ''}
               data={dataset.data}
-              style={{data: {stroke: dataset.color, 'stroke-width': dataset.visible ? 2 : 0}, label: {color: dataset.color}}} />
+              style={{data: {stroke: dataset.color, 'strokeWidth': dataset.visible ? 2 : 0}, label: {color: dataset.color}}} />
             ))}
         </VictoryChart>
         ) : null}
