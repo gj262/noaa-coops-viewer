@@ -114,6 +114,7 @@ class CoOpsCompare extends React.Component {
         <VictoryChart
           width={1024}
           height={500}
+          padding={{ top: 50, bottom: 50, left: 50, right: 150 }}
           scale={{
             x: d3_scale.time(),
             y: d3_scale.linear()
