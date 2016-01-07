@@ -77,7 +77,7 @@ app.use(/\/api/, proxy(options.proxy, {
       console.log('Caching ' + req.originalUrl)
       cache[req.originalUrl] = {
         data: data,
-        'Content-Type': res.get('Content-Type'),
+        'Content-Type': 'text/json',
         'Content-Encoding': res.get('Content-Encoding')
       }
     }
