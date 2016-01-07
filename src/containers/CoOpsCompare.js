@@ -47,8 +47,12 @@ class CoOpsCompare extends React.Component {
     // Map to display data as new data is received.
     var chartData = nextProps.data.map(dataset => {
       var chartDataset = !this.state.chartData
-        ? null
-        : this.state.chartData.find(chartDataset => chartDataset.year === dataset.year);
+          ? null
+          : this.state.chartData.find(
+            chartDataset =>
+              chartDataset.year === dataset.year &&
+              chartDataset.sample_function === dataset.sample_function
+          );
       if (!chartDataset) {
         chartDataset = Object.assign({}, dataset);
         chartDataset.color = this.props.linePalette[dataset.year % this.props.linePalette.length];
@@ -65,7 +69,16 @@ class CoOpsCompare extends React.Component {
   }
 
   render () {
-    var orderedYears = this.props.data.sort((a, b) => b.year - a.year).map(data => data.year);
+    var orderedYears = [];
+    this.props.data
+      .map(data => data.year)
+      .sort((a, b) => b - a)
+      .forEach(year => {
+        if (orderedYears.indexOf(year) === -1) {
+          orderedYears.push(year)
+        }
+      })
+                                                                         ;
     return (
       <div>
         {this.props.errors.map(
@@ -99,11 +112,11 @@ class CoOpsCompare extends React.Component {
             tickFormat={d3_time_format.format('%B')}/>
           {this.state.chartData.map(dataset => (
             <StaticVictoryLine
-              key={dataset.year}
+              key={dataset.year + dataset.sample_function}
               visible={dataset.visible}
               interpolation='cardinal'
               animate={{velocity: 0.02}}
-              label={dataset.visible ? `${dataset.year} [${dataset.min.toFixed(2)}/${dataset.avg.toFixed(2)}/${dataset.max.toFixed(2)}]` : ''}
+              label={dataset.visible ? `${dataset.year} ${dataset.sample_function}` : ''}
               data={dataset.data}
               style={{data: {stroke: dataset.color, 'strokeWidth': dataset.visible ? 2 : 0}, label: {color: dataset.color}}} />
             ))}

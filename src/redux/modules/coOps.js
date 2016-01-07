@@ -84,11 +84,11 @@ function fetchOne(year, station, done) {
     if ('error' in json) {
       return done(null, fetchError(year, json.error.message))
     }
-    done(cleanseData(json.data), null)
+    done(dropAnomalousValues(dropEmptyValues(json.data)), null)
   })
 }
 
-function cleanseData(data) {
+function dropEmptyValues(data) {
   data = data || []
   return data.filter(datum => {
     if ('t' in datum && 'v' in datum && datum.v) {
@@ -109,6 +109,38 @@ function cleanseData(data) {
   })
 }
 
+const VARIANCE = 5.0
+
+function dropAnomalousValues(data) {
+  // Compare each datum to two neighbors and drop if the value is too
+  // different.
+  if (data.length < 3) {
+    return data
+  }
+  return data.filter((datum, idx) => {
+    var n1 = idx - 1;
+    var n2 = idx + 1;
+    if (n1 < 0) {
+      n1 = n2 + 1
+    }
+    if (n2 >= data.length) {
+      n2 = n1 - 1
+    }
+    if (Math.abs(datum.v - data[n1].v) > VARIANCE &&
+        Math.abs(datum.v - data[n2].v) > VARIANCE) {
+      console.warn(`Dropping variant datum ${datum.t} ${datum.v}`)
+      return false
+    }
+    return true
+  })
+}
+
+// Sampling functions
+
+export const MIN = 'Minimum'
+export const MAX = 'Maximum'
+export const AVG = 'Average'
+
 // Reducer
 
 export default createReducer(
@@ -127,10 +159,14 @@ export default createReducer(
       return Object.assign({}, state, { isFetching: true, errors: [] })
     },
     [DATA_FETCHED]: (state, [year, data]) => {
-      var [, , avg] = createFunctionalGraphs(resample(data))
+      var [min, max, avg] = createFunctionalGraphs(resample(data))
       return Object.assign({}, state, {
         isFetching: false,
-        data: state.data.concat({ year: year, data: avg, ...addMinMaxAvg(avg) })
+        data: state.data.concat(
+          { year: year, sample_function: MIN, data: min, ...addOverallMinMaxAvg(min) },
+          { year: year, sample_function: MAX, data: max, ...addOverallMinMaxAvg(max) },
+          { year: year, sample_function: AVG, data: avg, ...addOverallMinMaxAvg(avg) }
+        )
       })
     },
     [FETCH_ERROR]: (state, [year, message]) => {
@@ -191,8 +227,14 @@ function resample(data) {
 
 function createFunctionalGraphs(resampled) {
   return [
-    null,
-    null,
+    resampled.map(bucket => ({
+      x: bucket.date,
+      y: bucket.data.reduce((min, value) => (value < min) ? value : min, 1000)
+    })),
+    resampled.map(bucket => ({
+      x: bucket.date,
+      y: bucket.data.reduce((max, value) => (value > max) ? value : max, -1000)
+    })),
     resampled.map(bucket => ({
       x: bucket.date,
       y: bucket.data.reduce((total, value) => total + value, 0) / bucket.data.length
@@ -200,7 +242,7 @@ function createFunctionalGraphs(resampled) {
   ]
 }
 
-function addMinMaxAvg(data) {
+function addOverallMinMaxAvg(data) {
   var min = null
   var max = null
   var avg = 0
