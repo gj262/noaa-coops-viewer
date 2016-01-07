@@ -35,8 +35,7 @@ class CoOpsCompare extends React.Component {
   constructor() {
     super()
     this.state = {
-      chartData: [],
-      referenceYear: 2012
+      chartData: []
     }
   }
 
@@ -51,7 +50,7 @@ class CoOpsCompare extends React.Component {
         ? null
         : this.state.chartData.find(chartDataset => chartDataset.year === dataset.year);
       if (!chartDataset) {
-        chartDataset = this.resampleAndMapToSameScale(dataset);
+        chartDataset = Object.assign({}, dataset);
         chartDataset.color = this.props.linePalette[dataset.year % this.props.linePalette.length];
         chartDataset.visible = nextProps.years.indexOf(dataset.year) !== -1;
       }
@@ -63,40 +62,6 @@ class CoOpsCompare extends React.Component {
     this.setState({
       chartData: chartData
     })
-  }
-
-  resampleAndMapToSameScale(dataset) {
-    dataset = Object.assign({}, dataset);
-    var sample_date = Moment([this.state.referenceYear])
-    var begin_date = sample_date.clone().startOf('year')
-    var end_date = sample_date.clone().endOf('year')
-    var ms_in_year = end_date - begin_date;
-    var ms_per_bucket = ms_in_year / this.props.sampleCount;
-    var resampled = [];
-    var current_bucket_end_date = begin_date.add(ms_per_bucket).format('YYYY-MM-DD HH:mm')
-    var bucket_idx = 0;
-    dataset.data.forEach(datum => {
-      var referenceDate = this.state.referenceYear + datum.t.substr(4)
-      while (referenceDate > current_bucket_end_date) {
-        current_bucket_end_date = begin_date.add(ms_per_bucket).format('YYYY-MM-DD HH:mm')
-        if (resampled.length > 0 && resampled.length > bucket_idx) {
-          bucket_idx++;
-        }
-      }
-      if (resampled.length <= bucket_idx) {
-        resampled.push({ t: datum.t, x: referenceDate, data: [] })
-      }
-      resampled[bucket_idx].data.push(parseFloat(datum.v))
-    })
-    dataset.data = resampled.map((bucket, idx) => {
-      return {
-        t: bucket.t,
-        x: Moment(bucket.x, 'YYYY-MM-DD HH:mm').toDate(),
-        y: bucket.data.reduce((total, value) => total + value, 0) / bucket.data.length
-      }
-    });
-
-    return dataset
   }
 
   render () {
@@ -138,7 +103,7 @@ class CoOpsCompare extends React.Component {
               visible={dataset.visible}
               interpolation='cardinal'
               animate={{velocity: 0.02}}
-              label={dataset.visible ? `${dataset.year} [${dataset.min}/${dataset.avg.toFixed(2)}/${dataset.max}]` : ''}
+              label={dataset.visible ? `${dataset.year} [${dataset.min.toFixed(2)}/${dataset.avg.toFixed(2)}/${dataset.max.toFixed(2)}]` : ''}
               data={dataset.data}
               style={{data: {stroke: dataset.color, 'strokeWidth': dataset.visible ? 2 : 0}, label: {color: dataset.color}}} />
             ))}
@@ -151,7 +116,7 @@ class CoOpsCompare extends React.Component {
 
   makeTicks() {
     var months = [];
-    var start = Moment([this.state.referenceYear])
+    var start = Moment([2012])
     for (var i = 0; i < 12; i++) {
       months.push(start.clone().toDate())
       start.add(1, 'month')

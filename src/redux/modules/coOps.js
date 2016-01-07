@@ -2,20 +2,23 @@ import createReducer from 'utils/createReducer'
 import fetch from 'isomorphic-fetch'
 import Moment from 'moment'
 
-// const debug = window.debug('redux:reducer:co_ops')
+// Dispatch Action Types
 
 const FETCHING_DATA = 'FETCHING_DATA'
 const DATA_FETCHED = 'DATA_FETCHED'
 const FETCH_ERROR = 'FETCH_ERROR'
 const TOGGLE_YEAR_SELECTION = 'TOGGLE_YEAR_SELECTION'
 
-// Actions Creators
+// Primitive Actions
 
 const fetchingData = () => ({ type: FETCHING_DATA })
 const dataFetched = (year, data) => ({ type: DATA_FETCHED, payload: [year, data] })
 const fetchError = (year, message) => ({ type: FETCH_ERROR, payload: [year, message] })
 const toggleYearSelection = (year) => ({ type: TOGGLE_YEAR_SELECTION, payload: year })
-export const toggleYear = (year) => {
+
+// Exported Actions
+
+const toggleYear = (year) => {
   return (dispatch, getState) => {
     dispatch(toggleYearSelection(year))
     if (!getState().coOps.data.find(data => data.year === year)) {
@@ -31,11 +34,17 @@ export const toggleYear = (year) => {
     }
   }
 }
+
 const prefetchData = () => {
   var year = Moment()
   return (dispatch, getState) => {
     prefetchFromYear(year, dispatch, getState)
   }
+}
+
+export const actions = {
+  prefetchData,
+  toggleYear
 }
 
 function prefetchFromYear(year, dispatch, getState) {
@@ -59,11 +68,6 @@ function prefetchFromYear(year, dispatch, getState) {
       }
     })
   }
-}
-
-export const actions = {
-  prefetchData,
-  toggleYear
 }
 
 function fetchOne(year, station, done) {
@@ -123,7 +127,11 @@ export default createReducer(
       return Object.assign({}, state, { isFetching: true, errors: [] })
     },
     [DATA_FETCHED]: (state, [year, data]) => {
-      return Object.assign({}, state, { isFetching: false, data: state.data.concat({ year: year, data: data, ...addStats(data) }) })
+      var [, , avg] = createFunctionalGraphs(resample(data))
+      return Object.assign({}, state, {
+        isFetching: false,
+        data: state.data.concat({ year: year, data: avg, ...addMinMaxAvg(avg) })
+      })
     },
     [FETCH_ERROR]: (state, [year, message]) => {
       return Object.assign({}, state, {
@@ -150,19 +158,61 @@ export default createReducer(
   }
 )
 
-function addStats(data) {
+const bucket_reference_year = 2012  // (use a leap year to bucket to handle samples from those years)
+const sample_count = 200
+
+function resample(data) {
+  var sample_date = Moment([bucket_reference_year])
+  var begin_date = sample_date.clone().startOf('year')
+  var end_date = sample_date.clone().endOf('year')
+  var ms_in_year = end_date - begin_date;
+  var ms_per_bucket = ms_in_year / sample_count;
+  var resampled = [];
+  var current_bucket_end_date = begin_date.add(ms_per_bucket).format('YYYY-MM-DD HH:mm')
+  var bucket_idx = 0;
+  data.forEach(datum => {
+    var referenceDate = 2012 + datum.t.substr(4)
+    while (referenceDate > current_bucket_end_date) {
+      current_bucket_end_date = begin_date.add(ms_per_bucket).format('YYYY-MM-DD HH:mm')
+      if (resampled.length > 0 && resampled.length > bucket_idx) {
+        bucket_idx++;
+      }
+    }
+    if (resampled.length <= bucket_idx) {
+      resampled.push({
+        date: Moment(referenceDate, 'YYYY-MM-DD HH:mm').toDate(),
+        data: []
+      })
+    }
+    resampled[bucket_idx].data.push(parseFloat(datum.v))
+  })
+  return resampled
+}
+
+function createFunctionalGraphs(resampled) {
+  return [
+    null,
+    null,
+    resampled.map(bucket => ({
+      x: bucket.date,
+      y: bucket.data.reduce((total, value) => total + value, 0) / bucket.data.length
+    }))
+  ]
+}
+
+function addMinMaxAvg(data) {
   var min = null
   var max = null
   var avg = 0
 
   data.forEach(datum => {
-    if (min === null || datum.v < min) {
-      min = datum.v
+    if (min === null || datum.y < min) {
+      min = datum.y
     }
-    if (max === null || datum.v > max) {
-      max = datum.v
+    if (max === null || datum.y > max) {
+      max = datum.y
     }
-    avg += datum.v
+    avg += datum.y
   })
 
   avg = avg / data.length
