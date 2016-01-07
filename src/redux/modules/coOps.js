@@ -8,6 +8,7 @@ const FETCHING_DATA = 'FETCHING_DATA'
 const DATA_FETCHED = 'DATA_FETCHED'
 const FETCH_ERROR = 'FETCH_ERROR'
 const TOGGLE_YEAR_SELECTION = 'TOGGLE_YEAR_SELECTION'
+const TOGGLE_SAMPLE_FUNCTION_SELECTION = 'TOGGLE_SAMPLE_FUNCTION_SELECTION'
 
 // Primitive Actions
 
@@ -17,6 +18,13 @@ const fetchError = (year, message) => ({ type: FETCH_ERROR, payload: [year, mess
 const toggleYearSelection = (year) => ({ type: TOGGLE_YEAR_SELECTION, payload: year })
 
 // Exported Actions
+
+const prefetchData = () => {
+  var year = Moment()
+  return (dispatch, getState) => {
+    prefetchFromYear(year, dispatch, getState)
+  }
+}
 
 const toggleYear = (year) => {
   return (dispatch, getState) => {
@@ -35,16 +43,12 @@ const toggleYear = (year) => {
   }
 }
 
-const prefetchData = () => {
-  var year = Moment()
-  return (dispatch, getState) => {
-    prefetchFromYear(year, dispatch, getState)
-  }
-}
+const toggleSampleFunction = (sampleFunction) => ({ type: TOGGLE_SAMPLE_FUNCTION_SELECTION, payload: sampleFunction })
 
 export const actions = {
   prefetchData,
-  toggleYear
+  toggleYear,
+  toggleSampleFunction
 }
 
 function prefetchFromYear(year, dispatch, getState) {
@@ -148,6 +152,7 @@ export default createReducer(
   {
     isFetching: false,
     years: [Moment().year(), Moment().subtract(1, 'y').year()],
+    sampleFunctions: [AVG],
     station: '9414290',
     data: [],
     errors: [],
@@ -163,9 +168,9 @@ export default createReducer(
       return Object.assign({}, state, {
         isFetching: false,
         data: state.data.concat(
-          { year: year, sample_function: MIN, data: min, ...addOverallMinMaxAvg(min) },
-          { year: year, sample_function: MAX, data: max, ...addOverallMinMaxAvg(max) },
-          { year: year, sample_function: AVG, data: avg, ...addOverallMinMaxAvg(avg) }
+          { year: year, sampleFunction: MIN, data: min, ...addOverallMinMaxAvg(min) },
+          { year: year, sampleFunction: MAX, data: max, ...addOverallMinMaxAvg(max) },
+          { year: year, sampleFunction: AVG, data: avg, ...addOverallMinMaxAvg(avg) }
         )
       })
     },
@@ -190,6 +195,16 @@ export default createReducer(
         years = state.years.filter(keep => keep !== year)
       }
       return Object.assign({}, state, { years: years })
+    },
+    [TOGGLE_SAMPLE_FUNCTION_SELECTION]: (state, sampleFunction) => {
+      var sampleFunctions
+      if (state.sampleFunctions.indexOf(sampleFunction) === -1) {
+        sampleFunctions = state.sampleFunctions.concat(sampleFunction)
+      }
+      else {
+        sampleFunctions = state.sampleFunctions.filter(keep => keep !== sampleFunction)
+      }
+      return Object.assign({}, state, { sampleFunctions: sampleFunctions })
     }
   }
 )
