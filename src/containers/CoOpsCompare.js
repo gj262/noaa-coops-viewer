@@ -72,13 +72,11 @@ class CoOpsCompare extends React.Component {
       if (!chartDataset) {
         chartDataset = Object.assign({}, dataset);
         chartDataset.color = this.props.linePalette[dataset.year % this.props.linePalette.length];
-        chartDataset.visible = nextProps.years.indexOf(dataset.year) !== -1 &&
-          nextProps.sampleFunctions.indexOf(dataset.sampleFunction) !== -1;
       }
-      else {
-        chartDataset.visible = nextProps.years.indexOf(dataset.year) !== -1 &&
-          nextProps.sampleFunctions.indexOf(dataset.sampleFunction) !== -1;
-      }
+      chartDataset.visible = nextProps.years.indexOf(dataset.year) !== -1 &&
+        nextProps.sampleFunctions.indexOf(dataset.sampleFunction) !== -1;
+      chartDataset.thin = nextProps.years.indexOf(dataset.year) === -1 &&
+        nextProps.sampleFunctions.indexOf(dataset.sampleFunction) !== -1;
       return chartDataset
     })
 
@@ -119,7 +117,7 @@ class CoOpsCompare extends React.Component {
           }}>
           <VictoryAxis
             dependentAxis
-            tickValues={[47.5, 50, 55, 60, 65, 70]}
+            tickValues={[45, 50, 55, 60, 65, 70]}
             style={{
               grid: {strokeWidth: 1}
             }} />
@@ -133,13 +131,14 @@ class CoOpsCompare extends React.Component {
             <StaticVictoryLine
               key={dataset.year + dataset.sampleFunction}
               visible={dataset.visible}
+              thin={dataset.thin}
               interpolation='cardinal'
               label={dataset.visible ? `${dataset.year} ${dataset.sampleFunction}` : ''}
               data={dataset.data}
               style={{
                 data: {
                   stroke: dataset.visible ? dataset.color : 'lightGrey',
-                  'strokeWidth': dataset.visible ? 2 : 0.5
+                  'strokeWidth': dataset.visible ? 2 : dataset.thin ? 0.5 : 0
                 },
                 label: {color: dataset.color}
               }} />
