@@ -7,7 +7,7 @@ export default class YearSelector extends React.Component {
     years: React.PropTypes.array.isRequired,
     selection: React.PropTypes.array.isRequired,
     toggleYear: React.PropTypes.func
-  }
+  };
 
   render () {
     return (

@@ -7,7 +7,7 @@ export default class SampleFunctionSelector extends React.Component {
     sampleFunctions: React.PropTypes.array.isRequired,
     selection: React.PropTypes.array.isRequired,
     toggleSampleFunction: React.PropTypes.func
-  }
+  };
 
   render () {
     return (
