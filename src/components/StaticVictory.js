@@ -9,7 +9,7 @@ class StaticVictoryLine extends React.Component {
     data: React.PropTypes.array.isRequired,
     visible: React.PropTypes.bool.isRequired,
     thin: React.PropTypes.bool.isRequired
-  }
+  };
 
   shouldComponentUpdate(nextProps) {
     return this.props.data !== nextProps.data ||

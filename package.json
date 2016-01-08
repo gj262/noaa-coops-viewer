@@ -1,26 +1,21 @@
 {
-  "name": "react-redux-starter-kit",
-  "version": "0.18.0",
-  "description": "Get started with React, Redux, and React-Router!",
+  "name": "noaa-coops-viewer",
+  "version": "0.0.1",
+  "description": "Example React/Redux app to view data from NOAA CO-OPS stations",
   "main": "index.js",
   "scripts": {
-    "clean": "rm -rf dist",
-    "compile": "node -r dotenv/config --harmony bin/compile",
-    "lint:fix": "eslint **/* --fix",
-    "start": "npm run dev",
-    "dev": "node -r dotenv/config bin/server --hot",
-    "dev:nw": "npm run dev -- --nw",
-    "dev:no-debug": "npm run dev -- --no_debug",
-    "test": "node -r dotenv/config ./node_modules/karma/bin/karma start bin/karma.js",
-    "test:dev": "npm run test -- --watch",
-    "deploy": "npm run test && npm run compile"
+    "postinstall": "webpack -v",
+    "start": "nf start"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/davezuko/react-redux-starter-kit.git"
+    "url": "git+https://github.com/gj262/noaa-coops-viewer.git"
   },
-  "author": "David Zukowski <david@zuko.me> (http://zuko.me)",
+  "author": "Gavin Jefferies <gavin@vmbed.com> (https://github.com/gj262)",
   "license": "MIT",
+  "engines": {
+    "node": "5.2.0"
+  },
   "dependencies": {
     "babel-polyfill": "^6.3.14",
     "cssnano": "^3.3.2",
@@ -31,6 +26,7 @@
     "debug": "^2.2.0",
     "dotenv": "^1.2.0",
     "es6-promise": "^3.0.2",
+    "foreman": "1.4.1",
     "history": "1.17.0",
     "isomorphic-fetch": "^2.2.0",
     "moment": "^2.10.6",
