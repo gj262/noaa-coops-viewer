@@ -27,7 +27,8 @@ const webpackConfig = {
       path_base + '/src/utils/logging.js'
     ],
     vendor: [
-      'd3',
+      'd3-scale',
+      'd3-time-format',
       'history',
       'moment',
       'react',

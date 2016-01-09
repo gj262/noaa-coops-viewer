@@ -16,23 +16,10 @@ export default class Root extends React.Component {
       </Router>
     )
 
-    if (__DEBUG__ && !__DEBUG_NW__) {
-      const DevTools = require('containers/DevTools').default
-
-      return (
-        <Provider store={this.props.store}>
-          <div>
-            {content}
-            <DevTools />
-          </div>
-        </Provider>
-      )
-    } else {
-      return (
+    return (
         <Provider store={this.props.store}>
           {content}
         </Provider>
-      )
-    }
+    )
   }
 }
