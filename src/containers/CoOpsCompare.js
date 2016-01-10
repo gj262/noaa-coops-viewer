@@ -154,8 +154,8 @@ class CoOpsCompare extends React.Component {
            sampleFunctions={[MIN, AVG, MAX]}
            toggleSampleFunction={this.props.toggleSampleFunction} />
         <YearSelector
+           data={this.state.chartData}
            selection={this.props.years}
-           years={this.state.availableYears}
            toggleYear={this.props.toggleYear} />
         </div>
       </SplitPane>
