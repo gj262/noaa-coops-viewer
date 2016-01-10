@@ -58,6 +58,7 @@
     "react-dom": "^0.14.0",
     "react-redux": "^4.0.0",
     "react-router": "1.0.3",
+    "react-split-pane": "0.1.22",
     "react-transform-catch-errors": "^1.0.0",
     "redbox-react": "^1.0.4",
     "redux": "^3.0.0",

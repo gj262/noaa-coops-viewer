@@ -1,4 +1,5 @@
 import React from 'react'
+import SplitPane from 'react-split-pane'
 import { VictoryAxis, VictoryChart } from 'victory'
 import { StaticVictoryLine } from 'components/StaticVictory'
 import d3_time_format from 'd3-time-format'
@@ -8,6 +9,7 @@ import { actions as coOpsActions, MIN, AVG, MAX } from 'redux/modules/coOps'
 import Moment from 'moment'
 import YearSelector from 'components/YearSelector'
 import SampleFunctionSelector from 'components/SampleFunctionSelector'
+import './CoOpsCompare.scss'
 
 const mapStateToProps = (state) => ({
   isFetching: state.coOps.isFetching,
@@ -97,7 +99,8 @@ class CoOpsCompare extends React.Component {
 
   render () {
     return (
-      <div>
+      <SplitPane defaultSize='1024px'>
+        <div>
         {this.props.errors.map(
           error =>
             (
@@ -110,7 +113,6 @@ class CoOpsCompare extends React.Component {
         <VictoryChart
           width={1024}
           height={500}
-          padding={{ top: 50, bottom: 50, left: 50, right: 150 }}
           scale={{
             x: d3_scale.time(),
             y: d3_scale.linear()
@@ -133,7 +135,7 @@ class CoOpsCompare extends React.Component {
               visible={dataset.visible}
               thin={dataset.thin}
               interpolation='cardinal'
-              label={dataset.visible ? `${dataset.year} ${dataset.sampleFunction}` : ''}
+              label={dataset.visible ? `${dataset.year}` : ''}
               data={dataset.data}
               style={{
                 data: {
@@ -145,6 +147,8 @@ class CoOpsCompare extends React.Component {
             ))}
         </VictoryChart>
         ) : null}
+        </div>
+        <div>
         <SampleFunctionSelector
            selection={this.props.sampleFunctions}
            sampleFunctions={[MIN, AVG, MAX]}
@@ -153,7 +157,8 @@ class CoOpsCompare extends React.Component {
            selection={this.props.years}
            years={this.state.availableYears}
            toggleYear={this.props.toggleYear} />
-      </div>
+        </div>
+      </SplitPane>
     );
   }
 
