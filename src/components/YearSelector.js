@@ -11,17 +11,22 @@ export default class YearSelector extends React.Component {
 
   render () {
     return (
-        <div>
-        <ul className='years'>
-        {this.props.years.map(year => (
-            <li key={year}>
-            {year}
-            &nbsp;
-            <input type='checkbox' checked={this.isChecked(year)} onChange={this.yearSelect.bind(this, year)} />
-            </li>
-        ))}
-        </ul>
-        </div>
+        <table className='table table-condensed years'>
+          <thead>
+          </thead>
+          <tbody>
+          {this.props.years.map(year => (
+            <tr key={year}>
+              <td>
+                {year}
+              </td>
+              <td>
+                <input type='checkbox' checked={this.isChecked(year)} onChange={this.yearSelect.bind(this, year)} />
+              </td>
+            </tr>
+          ))}
+          </tbody>
+        </table>
     )
   }
 
