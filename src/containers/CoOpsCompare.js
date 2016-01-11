@@ -100,8 +100,7 @@ class CoOpsCompare extends React.Component {
       }
       chartDataset.visible = nextProps.years.indexOf(dataset.year) !== -1 &&
         nextProps.sampleFunctions.indexOf(dataset.sampleFunction) !== -1;
-      chartDataset.thin = nextProps.years.indexOf(dataset.year) === -1 &&
-        nextProps.sampleFunctions.indexOf(dataset.sampleFunction) !== -1;
+      chartDataset.thin = !chartDataset.visible;
       return chartDataset
     })
 
@@ -114,10 +113,35 @@ class CoOpsCompare extends React.Component {
       }
     });
 
+    var yTicks = this.makeYTicks(nextProps.data)
+
     this.setState({
-      chartData: chartData,
-      availableYears: availableYears
+      chartData,
+      availableYears,
+      yTicks
     })
+  }
+
+  makeYTicks(data) {
+    if (!data || data.length === 0) {
+      return []
+    }
+    var min;
+    var max;
+    data.forEach(dataset => {
+      if (dataset.sampleFunction === MIN && (!min || dataset.min < min)) {
+        min = dataset.min
+      }
+      if (dataset.sampleFunction === MAX && (!max || dataset.max > max)) {
+        max = dataset.max
+      }
+    })
+    var ticks = [];
+    for (var tick = Math.floor((min - 1) / 5) * 5; tick < max + 1; tick += 5) {
+      ticks.push(tick)
+    }
+    ticks.push(tick)
+    return ticks
   }
 
   render () {
@@ -133,61 +157,93 @@ class CoOpsCompare extends React.Component {
              selection={this.props.sampleFunctions}
              sampleFunctions={[MIN, AVG, MAX]}
              toggleSampleFunction={this.props.toggleSampleFunction} />
-          {this.props.errors.map(
-            error =>
-              (
-                <div key={error.instance} className='alert alert-warning' role='alert'>
-                  Could not load data for {error.year}. {error.message}
-                </div>
-              )
-          )}
-          {this.state.chartData ? (
-          <VictoryChart
-            width={1024}
-            height={500}
-            scale={{
-              x: d3_scale.time(),
-              y: d3_scale.linear()
-            }}>
-            <VictoryAxis
-              dependentAxis
-              tickValues={[45, 50, 55, 60, 65, 70]}
-              style={{
-                grid: {strokeWidth: 1}
-              }} />
-            <VictoryAxis
-              style={{
-                grid: {strokeWidth: 1}
-              }}
-              tickValues={this.state.xTicks}
-              tickFormat={d3_time_format.format('%B')}/>
-            {this.state.chartData.map(dataset => (
-              <StaticVictoryLine
-                key={dataset.year + dataset.sampleFunction}
-                visible={dataset.visible}
-                thin={dataset.thin}
-                interpolation='cardinal'
-                label={dataset.visible ? `${dataset.year}` : ''}
-                data={dataset.data}
-                style={{
-                  data: {
-                    stroke: dataset.visible ? dataset.color : 'lightGrey',
-                    'strokeWidth': dataset.visible ? 2 : dataset.thin ? 0.5 : 0
-                  },
-                  label: {color: dataset.color}
-                }} />
-              ))}
-          </VictoryChart>
-          ) : null}
+          {this.renderErrors()}
+          {this.renderChart()}
         </div>
         <div>
-        <YearSelector
-           data={this.state.chartData}
-           selection={this.props.years}
-           toggleYear={this.props.toggleYear} />
+          <YearSelector
+             data={this.state.chartData}
+             selection={this.props.years}
+             toggleYear={this.props.toggleYear} />
         </div>
       </SplitPane>
     );
+  }
+
+  renderErrors() {
+    return this.props.errors.map(
+      error => (
+          <div key={error.instance} className='alert alert-warning' role='alert'>
+            Could not load data for {error.year}. {error.message}
+          </div>
+      )
+    )
+  }
+
+  renderChart() {
+    if (!this.state.chartData || this.state.chartData.length === 0) {
+      return null
+    }
+    return (
+      <VictoryChart
+        width={1024}
+        height={500}
+        scale={{
+          x: d3_scale.time(),
+          y: d3_scale.linear()
+        }}>
+        {this.renderYAxis()}
+        {this.renderXAxis()}
+        {this.state.chartData.map(dataset => this.renderLine(dataset))}
+      </VictoryChart>
+    )
+  }
+
+  renderYAxis() {
+    return (
+      <VictoryAxis
+        dependentAxis
+        tickValues={this.state.yTicks}
+        style={{
+          grid: {strokeWidth: 1}
+        }} />
+    )
+  }
+
+  renderXAxis() {
+    return (
+      <VictoryAxis
+        style={{
+          grid: {strokeWidth: 1}
+        }}
+        tickValues={this.state.xTicks}
+        tickFormat={d3_time_format.format('%B')}/>
+    )
+  }
+
+  renderLine(dataset) {
+    var instanceKey = this.state.selectedStationID +
+        dataset.year +
+        dataset.sampleFunction +
+        this.state.yTicks[0] +
+        this.state.yTicks[this.state.yTicks.length - 1]
+    return (
+       <StaticVictoryLine
+         key={instanceKey}
+         visible={dataset.visible}
+         thin={dataset.thin}
+         range={[this.state.yTicks[0], this.state.yTicks[this.state.yTicks.length - 1]]}
+         interpolation='cardinal'
+         label={dataset.visible ? `${dataset.year}` : ''}
+         data={dataset.data}
+         style={{
+           data: {
+             stroke: dataset.visible ? dataset.color : 'lightGrey',
+             'strokeWidth': dataset.visible ? 2 : dataset.thin ? 0.5 : 0
+           },
+           label: {color: dataset.color}
+         }} />
+    )
   }
 }
 
