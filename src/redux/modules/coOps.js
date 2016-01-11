@@ -1,6 +1,7 @@
 import createReducer from 'utils/createReducer'
 import fetch from 'isomorphic-fetch'
 import Moment from 'moment'
+import stations from './stations'
 
 // Dispatch Action Types
 
@@ -9,6 +10,7 @@ const DATA_FETCHED = 'DATA_FETCHED'
 const FETCH_ERROR = 'FETCH_ERROR'
 const TOGGLE_YEAR_SELECTION = 'TOGGLE_YEAR_SELECTION'
 const TOGGLE_SAMPLE_FUNCTION_SELECTION = 'TOGGLE_SAMPLE_FUNCTION_SELECTION'
+const SELECT_STATION_ID = 'SELECT_STATION_ID'
 
 // Primitive Actions
 
@@ -31,7 +33,7 @@ const toggleYear = (year) => {
     dispatch(toggleYearSelection(year))
     if (!getState().coOps.data.find(data => data.year === year)) {
       dispatch(fetchingData())
-      fetchOne(year, getState().coOps.station, (data, error) => {
+      fetchOne(year, getState().coOps.selectedStationID, (data, error) => {
         if (data) {
           dispatch(dataFetched(year, data))
         }
@@ -45,16 +47,19 @@ const toggleYear = (year) => {
 
 const toggleSampleFunction = (sampleFunction) => ({ type: TOGGLE_SAMPLE_FUNCTION_SELECTION, payload: sampleFunction })
 
+const selectStationID = (stationID) => ({ type: SELECT_STATION_ID, payload: stationID })
+
 export const actions = {
   prefetchData,
   toggleYear,
-  toggleSampleFunction
+  toggleSampleFunction,
+  selectStationID
 }
 
 function prefetchFromYear(year, dispatch, getState) {
   if (getState().coOps.errors.length === 0) {
     dispatch(fetchingData())
-    fetchOne(year.year(), getState().coOps.station, (data, error) => {
+    fetchOne(year.year(), getState().coOps.selectedStationID, (data, error) => {
       if (data) {
         dispatch(dataFetched(year.year(), data))
         prefetchFromYear(year.subtract(1, 'y'), dispatch, getState)
@@ -153,10 +158,11 @@ export default createReducer(
     isFetching: false,
     years: [Moment().year(), Moment().subtract(1, 'y').year()],
     sampleFunctions: [AVG],
-    station: '9414290',
+    selectedStationID: '9414290',
     data: [],
     errors: [],
-    errorInstance: 0
+    errorInstance: 0,
+    stations: compileWaterTempStations(stations)
   },
   // reducers
   {
@@ -205,6 +211,9 @@ export default createReducer(
         sampleFunctions = state.sampleFunctions.filter(keep => keep !== sampleFunction)
       }
       return Object.assign({}, state, { sampleFunctions: sampleFunctions })
+    },
+    [SELECT_STATION_ID]: (state, stationID) => {
+      return Object.assign({}, state, { selectedStationID: stationID, data: [] })
     }
   }
 )
@@ -275,4 +284,36 @@ function addOverallMinMaxAvg(data) {
   avg = avg / data.length
 
   return {min: min, max: max, avg: avg}
+}
+
+function compileWaterTempStations(stations) {
+  // Convert the raw data to relevant stations with temperature data.
+  // original source: http://opendap.co-ops.nos.noaa.gov/stations/stationsXML.jsp
+  // passed through: http://json.online-toolz.com/tools/xml-json-convertor.php
+  // saved to 'stations.js'
+  var hasWaterTemp = parameter => {
+    return parameter['@attributes'].name === 'Water Temp' &&
+      parameter['@attributes'].status === '1'
+  }
+  return stations.station
+    .filter(stationXML => {
+      if (stationXML.parameter) {
+        if (stationXML.parameter.find) {
+          return !!stationXML.parameter.find(hasWaterTemp)
+        }
+        else {
+          return hasWaterTemp(stationXML.parameter)
+        }
+      }
+      return false
+    })
+    .map(stationXML => {
+      return {
+        ID: stationXML['@attributes'].ID,
+        name: stationXML['@attributes'].name,
+        state: stationXML.metadata.location.state,
+        latitude: stationXML.metadata.location.lat,
+        longtitude: stationXML.metadata.location['long']
+      }
+    })
 }

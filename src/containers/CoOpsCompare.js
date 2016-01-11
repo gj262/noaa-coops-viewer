@@ -9,6 +9,8 @@ import { actions as coOpsActions, MIN, AVG, MAX } from 'redux/modules/coOps'
 import Moment from 'moment'
 import YearSelector from 'components/YearSelector'
 import SampleFunctionSelector from 'components/SampleFunctionSelector'
+import StationSelector from 'components/StationSelector'
+
 import './CoOpsCompare.scss'
 
 const mapStateToProps = (state) => ({
@@ -16,7 +18,9 @@ const mapStateToProps = (state) => ({
   data: state.coOps.data,
   years: state.coOps.years,
   sampleFunctions: state.coOps.sampleFunctions,
-  errors: state.coOps.errors
+  errors: state.coOps.errors,
+  selectedStationID: state.coOps.selectedStationID,
+  stations: state.coOps.stations
 })
 
 class CoOpsCompare extends React.Component {
@@ -30,7 +34,10 @@ class CoOpsCompare extends React.Component {
     data: React.PropTypes.array,
     years: React.PropTypes.array,
     sampleFunctions: React.PropTypes.array,
-    errors: React.PropTypes.array
+    errors: React.PropTypes.array,
+    stations: React.PropTypes.array.isRequired,
+    selectedStationID: React.PropTypes.string.isRequired,
+    selectStationID: React.PropTypes.func.isRequired
   };
 
   static defaultProps = {
@@ -62,6 +69,10 @@ class CoOpsCompare extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
+    if (nextProps.selectedStationID !== this.props.selectedStationID) {
+      this.props.prefetchData()
+    }
+
     // Map to display data as new data is received.
     var chartData = nextProps.data.map(dataset => {
       var chartDataset = !this.state.chartData
@@ -102,6 +113,14 @@ class CoOpsCompare extends React.Component {
       <SplitPane defaultSize='1024px'>
         <div className='text-center'>
           <h1>NOAA CO-OPs Water Temperatures</h1>
+          <StationSelector
+             selectedStationID={this.props.selectedStationID}
+             stations={this.props.stations}
+             selectStationID={this.props.selectStationID} />
+          <SampleFunctionSelector
+             selection={this.props.sampleFunctions}
+             sampleFunctions={[MIN, AVG, MAX]}
+             toggleSampleFunction={this.props.toggleSampleFunction} />
           {this.props.errors.map(
             error =>
               (
@@ -148,10 +167,6 @@ class CoOpsCompare extends React.Component {
               ))}
           </VictoryChart>
           ) : null}
-          <SampleFunctionSelector
-             selection={this.props.sampleFunctions}
-             sampleFunctions={[MIN, AVG, MAX]}
-             toggleSampleFunction={this.props.toggleSampleFunction} />
         </div>
         <div>
         <YearSelector
