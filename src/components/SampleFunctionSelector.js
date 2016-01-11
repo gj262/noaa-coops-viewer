@@ -11,9 +11,10 @@ export default class SampleFunctionSelector extends React.Component {
 
   render () {
     return (
-        <div>
+      <div>
         <ul className='sample-functions'>
-        {this.props.sampleFunctions.map(sampleFunction => (
+          <li><h4>View:</h4></li>
+            {this.props.sampleFunctions.map(sampleFunction => (
             <li key={sampleFunction}>
             {sampleFunction}
             &nbsp;
@@ -22,8 +23,8 @@ export default class SampleFunctionSelector extends React.Component {
                checked={this.isChecked(sampleFunction)}
                onChange={this.sampleFunctionSelect.bind(this, sampleFunction)} />
             </li>
-        ))}
-        </ul>
+            ))}
+          </ul>
         </div>
     )
   }

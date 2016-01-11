@@ -100,59 +100,60 @@ class CoOpsCompare extends React.Component {
   render () {
     return (
       <SplitPane defaultSize='1024px'>
-        <div>
-        {this.props.errors.map(
-          error =>
-            (
-              <div key={error.instance} className='alert alert-warning' role='alert'>
-                Could not load data for {error.year}. {error.message}
-              </div>
-            )
-        )}
-        {this.state.chartData ? (
-        <VictoryChart
-          width={1024}
-          height={500}
-          scale={{
-            x: d3_scale.time(),
-            y: d3_scale.linear()
-          }}>
-          <VictoryAxis
-            dependentAxis
-            tickValues={[45, 50, 55, 60, 65, 70]}
-            style={{
-              grid: {strokeWidth: 1}
-            }} />
-          <VictoryAxis
-            style={{
-              grid: {strokeWidth: 1}
-            }}
-            tickValues={this.makeTicks()}
-            tickFormat={d3_time_format.format('%B')}/>
-          {this.state.chartData.map(dataset => (
-            <StaticVictoryLine
-              key={dataset.year + dataset.sampleFunction}
-              visible={dataset.visible}
-              thin={dataset.thin}
-              interpolation='cardinal'
-              label={dataset.visible ? `${dataset.year}` : ''}
-              data={dataset.data}
+        <div className='text-center'>
+          <h1>NOAA CO-OPs Water Temperatures</h1>
+          {this.props.errors.map(
+            error =>
+              (
+                <div key={error.instance} className='alert alert-warning' role='alert'>
+                  Could not load data for {error.year}. {error.message}
+                </div>
+              )
+          )}
+          {this.state.chartData ? (
+          <VictoryChart
+            width={1024}
+            height={500}
+            scale={{
+              x: d3_scale.time(),
+              y: d3_scale.linear()
+            }}>
+            <VictoryAxis
+              dependentAxis
+              tickValues={[45, 50, 55, 60, 65, 70]}
               style={{
-                data: {
-                  stroke: dataset.visible ? dataset.color : 'lightGrey',
-                  'strokeWidth': dataset.visible ? 2 : dataset.thin ? 0.5 : 0
-                },
-                label: {color: dataset.color}
+                grid: {strokeWidth: 1}
               }} />
-            ))}
-        </VictoryChart>
-        ) : null}
+            <VictoryAxis
+              style={{
+                grid: {strokeWidth: 1}
+              }}
+              tickValues={this.makeTicks()}
+              tickFormat={d3_time_format.format('%B')}/>
+            {this.state.chartData.map(dataset => (
+              <StaticVictoryLine
+                key={dataset.year + dataset.sampleFunction}
+                visible={dataset.visible}
+                thin={dataset.thin}
+                interpolation='cardinal'
+                label={dataset.visible ? `${dataset.year}` : ''}
+                data={dataset.data}
+                style={{
+                  data: {
+                    stroke: dataset.visible ? dataset.color : 'lightGrey',
+                    'strokeWidth': dataset.visible ? 2 : dataset.thin ? 0.5 : 0
+                  },
+                  label: {color: dataset.color}
+                }} />
+              ))}
+          </VictoryChart>
+          ) : null}
+          <SampleFunctionSelector
+             selection={this.props.sampleFunctions}
+             sampleFunctions={[MIN, AVG, MAX]}
+             toggleSampleFunction={this.props.toggleSampleFunction} />
         </div>
         <div>
-        <SampleFunctionSelector
-           selection={this.props.sampleFunctions}
-           sampleFunctions={[MIN, AVG, MAX]}
-           toggleSampleFunction={this.props.toggleSampleFunction} />
         <YearSelector
            data={this.state.chartData}
            selection={this.props.years}
