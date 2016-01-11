@@ -60,8 +60,20 @@ class CoOpsCompare extends React.Component {
     super()
     this.state = {
       chartData: [],
-      availableYears: []
+      availableYears: [],
+      xTicks: this.makeXTicks(),
+      yTicks: []
     }
+  }
+
+  makeXTicks() {
+    var months = [];
+    var start = Moment([2012])
+    for (var i = 0; i < 12; i++) {
+      months.push(start.clone().toDate())
+      start.add(1, 'month')
+    }
+    return months;
   }
 
   componentWillMount() {
@@ -147,7 +159,7 @@ class CoOpsCompare extends React.Component {
               style={{
                 grid: {strokeWidth: 1}
               }}
-              tickValues={this.makeTicks()}
+              tickValues={this.state.xTicks}
               tickFormat={d3_time_format.format('%B')}/>
             {this.state.chartData.map(dataset => (
               <StaticVictoryLine
@@ -176,16 +188,6 @@ class CoOpsCompare extends React.Component {
         </div>
       </SplitPane>
     );
-  }
-
-  makeTicks() {
-    var months = [];
-    var start = Moment([2012])
-    for (var i = 0; i < 12; i++) {
-      months.push(start.clone().toDate())
-      start.add(1, 'month')
-    }
-    return months;
   }
 }
 
