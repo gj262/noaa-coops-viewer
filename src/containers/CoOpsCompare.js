@@ -41,7 +41,7 @@ class CoOpsCompare extends React.Component {
   };
 
   static defaultProps = {
-    linePalette: [ '#FFFF00', '#1CE6FF', '#FF34FF', '#FF4A46', '#008941', '#006FA6', '#A30059',
+    linePalette: [ '#1CE6FF', '#FF34FF', '#FF4A46', '#008941', '#006FA6', '#A30059',
                    '#FFDBE5', '#7A4900', '#0000A6', '#63FFAC', '#B79762', '#004D43', '#8FB0FF', '#997D87',
                    '#5A0007', '#809693', '#FEFFE6', '#1B4400', '#4FC601', '#3B5DFF', '#4A3B53', '#FF2F80',
                    '#61615A', '#BA0900', '#6B7900', '#00C2A0', '#FFAA92', '#FF90C9', '#B903AA', '#D16100',
@@ -233,7 +233,7 @@ class CoOpsCompare extends React.Component {
          visible={dataset.visible}
          thin={dataset.thin}
          range={[this.state.yTicks[0], this.state.yTicks[this.state.yTicks.length - 1]]}
-         interpolation='cardinal'
+         interpolation='basis'
          label={dataset.visible ? `${dataset.year}` : ''}
          data={dataset.data}
          style={{
