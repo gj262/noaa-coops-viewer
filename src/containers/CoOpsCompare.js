@@ -173,9 +173,9 @@ class CoOpsCompare extends React.Component {
   renderErrors() {
     return this.props.errors.map(
       error => (
-          <div key={error.instance} className='alert alert-warning' role='alert'>
-            Could not load data for {error.year}. {error.message}
-          </div>
+        <div key={error.instance} className='alert alert-warning' role='alert'>
+          Could not load data for {error.year}. {error.message}
+        </div>
       )
     )
   }

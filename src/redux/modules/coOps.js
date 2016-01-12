@@ -59,20 +59,23 @@ export const actions = {
 function prefetchFromYear(year, dispatch, getState) {
   if (getState().coOps.errors.length === 0) {
     dispatch(fetchingData())
-    fetchOne(year.year(), getState().coOps.selectedStationID, (data, error) => {
-      if (data) {
-        dispatch(dataFetched(year.year(), data))
-        prefetchFromYear(year.subtract(1, 'y'), dispatch, getState)
-      }
-      else if (error) {
-        var [, message] = error.payload
-        if (message.indexOf('No data was found') !== -1) {
-          // year.year() + ' is the earliest'
-        }
-        else {
-          // other kind of error
-          dispatch(error)
+    var fetchedStationID = getState().coOps.selectedStationID
+    fetchOne(year.year(), fetchedStationID, (data, error) => {
+      if (getState().coOps.selectedStationID === fetchedStationID) {
+        if (data) {
+          dispatch(dataFetched(year.year(), data))
           prefetchFromYear(year.subtract(1, 'y'), dispatch, getState)
+        }
+        else if (error) {
+          var [, message] = error.payload
+          if (message.indexOf('No data was found') !== -1) {
+            // year.year() + ' is the earliest'
+          }
+          else {
+            // other kind of error
+            dispatch(error)
+            prefetchFromYear(year.subtract(1, 'y'), dispatch, getState)
+          }
         }
       }
     })
