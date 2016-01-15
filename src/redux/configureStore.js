@@ -6,7 +6,7 @@ import {
   createStore
 } from 'redux'
 
-export default function configureStore (initialState) {
+export default function configureStore () {
   let createStoreWithMiddleware
 
   const middleware = applyMiddleware(thunk)
@@ -14,7 +14,7 @@ export default function configureStore (initialState) {
   createStoreWithMiddleware = compose(middleware)
 
   const store = createStoreWithMiddleware(createStore)(
-    rootReducer, initialState
+    rootReducer
   )
 
   return store
