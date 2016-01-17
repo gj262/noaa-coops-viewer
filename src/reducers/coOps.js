@@ -35,7 +35,7 @@ const toggleYear = (year) => {
     else {
       years = years.filter(keep => keep !== year)
     }
-    dispatch(routeActions.push({ query: makeQuery(getState().coOps, { years: years.join(',') }) }))
+    dispatch(routeActions.push({ query: makeQuery(getState().coOps, { years: years.join(' ') }) }))
   }
 }
 
@@ -150,7 +150,7 @@ function makeQuery(state, change) {
     {},
     {
       stn: state.selectedStationID,
-      years: state.years.join(',')
+      years: state.years.join(' ')
     },
     change
   )
@@ -218,8 +218,8 @@ export default createReducer(
       if (!location || !location.query) {
         return state
       }
-      if (location.query.years && location.query.years !== state.years.join(',')) {
-        var years = location.query.years.split(/,/).map(year => parseInt(year, 10))
+      if (location.query.years && location.query.years !== state.years.join(' ')) {
+        var years = location.query.years.split(/ /).map(year => parseInt(year, 10))
         state = Object.assign({}, state, { years: years })
       }
       if (location.query.stn && location.query.stn !== state.selectedStationID) {
