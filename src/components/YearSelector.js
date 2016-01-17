@@ -1,5 +1,5 @@
 import React from 'react'
-import { MIN, AVG, MAX } from 'redux/modules/coOps'
+import { MIN, AVG, MAX } from 'reducers/coOps'
 
 import './YearSelector.scss'
 

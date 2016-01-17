@@ -4697,9 +4697,16 @@
       "resolved": "https://registry.npmjs.org/react-redux/-/react-redux-4.0.6.tgz"
     },
     "react-router": {
-      "version": "1.0.3",
-      "from": "react-router@1.0.3",
-      "resolved": "https://registry.npmjs.org/react-router/-/react-router-1.0.3.tgz"
+      "version": "2.0.0-rc5",
+      "from": "react-router@2.0.0-rc5",
+      "resolved": "https://registry.npmjs.org/react-router/-/react-router-2.0.0-rc5.tgz",
+      "dependencies": {
+        "history": {
+          "version": "2.0.0-rc2",
+          "from": "history@>=2.0.0-rc1 <3.0.0",
+          "resolved": "https://registry.npmjs.org/history/-/history-2.0.0-rc2.tgz"
+        }
+      }
     },
     "react-split-pane": {
       "version": "0.1.22",
@@ -4794,7 +4801,7 @@
     },
     "redux": {
       "version": "3.0.5",
-      "from": "redux@>=3.0.0 <4.0.0",
+      "from": "redux@3.0.5",
       "resolved": "https://registry.npmjs.org/redux/-/redux-3.0.5.tgz"
     },
     "redux-devtools-themes": {
@@ -4803,9 +4810,9 @@
       "resolved": "https://registry.npmjs.org/redux-devtools-themes/-/redux-devtools-themes-1.0.0.tgz"
     },
     "redux-simple-router": {
-      "version": "1.0.2",
-      "from": "redux-simple-router@>=1.0.0 <2.0.0",
-      "resolved": "https://registry.npmjs.org/redux-simple-router/-/redux-simple-router-1.0.2.tgz"
+      "version": "2.0.3",
+      "from": "redux-simple-router@*",
+      "resolved": "https://registry.npmjs.org/redux-simple-router/-/redux-simple-router-2.0.3.tgz"
     },
     "redux-thunk": {
       "version": "1.0.3",

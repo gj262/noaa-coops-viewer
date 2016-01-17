@@ -1,16 +1,24 @@
 import 'babel-polyfill'
 import React from 'react'
 import ReactDOM from 'react-dom'
-import createBrowserHistory from 'history/lib/createBrowserHistory'
 import routes from './routes'
 import Root from './containers/Root'
-import configureStore from './redux/configureStore'
+import { browserHistory } from 'react-router'
+import { syncHistory, routeReducer } from 'redux-simple-router'
+import thunkMiddleware from 'redux-thunk'
+import reducers from './reducers'
+import { applyMiddleware, createStore, combineReducers } from 'redux'
 
-const history = createBrowserHistory()
-const store = configureStore()
+const reducer = combineReducers(Object.assign({}, reducers, {
+  routing: routeReducer
+}))
+
+const reduxRouterMiddleware = syncHistory(browserHistory)
+const createStoreWithMiddleware = applyMiddleware(reduxRouterMiddleware, thunkMiddleware)(createStore)
+const store = createStoreWithMiddleware(reducer)
 
 // Render the React application to the DOM
 ReactDOM.render(
-  <Root history={history} routes={routes} store={store} />,
+  <Root history={browserHistory} routes={routes} store={store} />,
   document.getElementById('root')
 )

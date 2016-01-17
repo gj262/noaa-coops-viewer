@@ -2,13 +2,13 @@ import createReducer from 'utils/createReducer'
 import fetch from 'isomorphic-fetch'
 import Moment from 'moment'
 import stations from './stations'
+import { routeActions, UPDATE_LOCATION } from 'redux-simple-router'
 
 // Dispatch Action Types
 
 const FETCHING_DATA = 'FETCHING_DATA'
 const DATA_FETCHED = 'DATA_FETCHED'
 const FETCH_ERROR = 'FETCH_ERROR'
-const TOGGLE_YEAR_SELECTION = 'TOGGLE_YEAR_SELECTION'
 const TOGGLE_SAMPLE_FUNCTION_SELECTION = 'TOGGLE_SAMPLE_FUNCTION_SELECTION'
 const SELECT_STATION_ID = 'SELECT_STATION_ID'
 
@@ -17,7 +17,6 @@ const SELECT_STATION_ID = 'SELECT_STATION_ID'
 const fetchingData = () => ({ type: FETCHING_DATA })
 const dataFetched = (year, data) => ({ type: DATA_FETCHED, payload: [year, data] })
 const fetchError = (year, message) => ({ type: FETCH_ERROR, payload: [year, message] })
-const toggleYearSelection = (year) => ({ type: TOGGLE_YEAR_SELECTION, payload: year })
 
 // Exported Actions
 
@@ -30,18 +29,14 @@ const prefetchData = () => {
 
 const toggleYear = (year) => {
   return (dispatch, getState) => {
-    dispatch(toggleYearSelection(year))
-    if (!getState().coOps.data.find(data => data.year === year)) {
-      dispatch(fetchingData())
-      fetchOne(year, getState().coOps.selectedStationID, (data, error) => {
-        if (data) {
-          dispatch(dataFetched(year, data))
-        }
-        else if (error) {
-          dispatch(error)
-        }
-      })
+    var years = getState().coOps.years
+    if (years.indexOf(year) === -1) {
+      years = years.concat(year)
     }
+    else {
+      years = years.filter(keep => keep !== year)
+    }
+    dispatch(routeActions.push({ query: { years: years.join(',') } }))
   }
 }
 
@@ -195,16 +190,6 @@ export default createReducer(
         years: state.years.filter(keep => keep !== year)
       })
     },
-    [TOGGLE_YEAR_SELECTION]: (state, year) => {
-      var years
-      if (state.years.indexOf(year) === -1) {
-        years = state.years.concat(year)
-      }
-      else {
-        years = state.years.filter(keep => keep !== year)
-      }
-      return Object.assign({}, state, { years: years })
-    },
     [TOGGLE_SAMPLE_FUNCTION_SELECTION]: (state, sampleFunction) => {
       var sampleFunctions
       if (state.sampleFunctions.indexOf(sampleFunction) === -1) {
@@ -217,6 +202,16 @@ export default createReducer(
     },
     [SELECT_STATION_ID]: (state, stationID) => {
       return Object.assign({}, state, { selectedStationID: stationID, data: [] })
+    },
+    [UPDATE_LOCATION]: (state, location) => {
+      if (!location || !location.query) {
+        return state
+      }
+      if (location.query.years) {
+        var years = location.query.years.split(/,/).map(year => parseInt(year, 10))
+        state = Object.assign({}, state, { years: years })
+      }
+      return state
     }
   }
 )
