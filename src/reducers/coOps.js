@@ -9,7 +9,6 @@ import { routeActions, UPDATE_LOCATION } from 'redux-simple-router'
 const FETCHING_DATA = 'FETCHING_DATA'
 const DATA_FETCHED = 'DATA_FETCHED'
 const FETCH_ERROR = 'FETCH_ERROR'
-const TOGGLE_SAMPLE_FUNCTION_SELECTION = 'TOGGLE_SAMPLE_FUNCTION_SELECTION'
 
 // Primitive Actions
 
@@ -39,8 +38,6 @@ const toggleYear = (year) => {
   }
 }
 
-const toggleSampleFunction = (sampleFunction) => ({ type: TOGGLE_SAMPLE_FUNCTION_SELECTION, payload: sampleFunction })
-
 const selectStationID = (stationID) => {
   return (dispatch, getState) => {
     dispatch(routeActions.push({ query: makeQuery(getState().coOps, { stn: stationID }) }))
@@ -50,7 +47,6 @@ const selectStationID = (stationID) => {
 export const actions = {
   prefetchData,
   toggleYear,
-  toggleSampleFunction,
   selectStationID
 }
 
@@ -156,11 +152,10 @@ function makeQuery(state, change) {
   )
 }
 
-// Sampling functions
+// Bounds
 
 export const MIN = 'Minimum'
 export const MAX = 'Maximum'
-export const AVG = 'Average'
 
 // Reducer
 
@@ -169,7 +164,6 @@ export default createReducer(
   {
     isFetching: false,
     years: [Moment().year(), Moment().subtract(1, 'y').year()],
-    sampleFunctions: [AVG],
     selectedStationID: '9414290',
     data: [],
     errors: [],
@@ -182,13 +176,12 @@ export default createReducer(
       return Object.assign({}, state, { isFetching: true, errors: [] })
     },
     [DATA_FETCHED]: (state, [year, data]) => {
-      var [min, max, avg] = createFunctionalGraphs(resample(data))
+      var [min, max] = createDailyMinMaxGraphs(data)
       return Object.assign({}, state, {
         isFetching: false,
         data: state.data.concat(
-          { year: year, sampleFunction: MIN, data: min, ...addOverallMinMaxAvg(min) },
-          { year: year, sampleFunction: MAX, data: max, ...addOverallMinMaxAvg(max) },
-          { year: year, sampleFunction: AVG, data: avg, ...addOverallMinMaxAvg(avg) }
+          { year: year, bound: MIN, data: min, min: getOverallMin(min) },
+          { year: year, bound: MAX, data: max, max: getOverallMax(max) }
         )
       })
     },
@@ -203,16 +196,6 @@ export default createReducer(
         }),
         years: state.years.filter(keep => keep !== year)
       })
-    },
-    [TOGGLE_SAMPLE_FUNCTION_SELECTION]: (state, sampleFunction) => {
-      var sampleFunctions
-      if (state.sampleFunctions.indexOf(sampleFunction) === -1) {
-        sampleFunctions = state.sampleFunctions.concat(sampleFunction)
-      }
-      else {
-        sampleFunctions = state.sampleFunctions.filter(keep => keep !== sampleFunction)
-      }
-      return Object.assign({}, state, { sampleFunctions: sampleFunctions })
     },
     [UPDATE_LOCATION]: (state, location) => {
       if (!location || !location.query) {
@@ -230,72 +213,49 @@ export default createReducer(
   }
 )
 
-const bucket_reference_year = 2012  // (use a leap year to bucket to handle samples from those years)
-const sample_count = 200
-
-function resample(data) {
-  var sample_date = Moment([bucket_reference_year])
-  var begin_date = sample_date.clone().startOf('year')
-  var end_date = sample_date.clone().endOf('year')
-  var ms_in_year = end_date - begin_date;
-  var ms_per_bucket = ms_in_year / sample_count;
-  var resampled = [];
-  var current_bucket_end_date = begin_date.add(ms_per_bucket).format('YYYY-MM-DD HH:mm')
-  var bucket_idx = 0;
+function createDailyMinMaxGraphs(data) {
+  var minGraph = []
+  var maxGraph = []
   data.forEach(datum => {
-    var referenceDate = 2012 + datum.t.substr(4)
-    while (referenceDate > current_bucket_end_date) {
-      current_bucket_end_date = begin_date.add(ms_per_bucket).format('YYYY-MM-DD HH:mm')
-      if (resampled.length > 0 && resampled.length > bucket_idx) {
-        bucket_idx++;
-      }
+    var referenceDate = 2012 + datum.t.substr(4, 6)
+    if (minGraph.length === 0 || minGraph[minGraph.length - 1].date !== referenceDate) {
+      minGraph.push({date: referenceDate, x: Moment(referenceDate, 'YYYY-MM-DD').toDate(), y: parseFloat(datum.v)})
     }
-    if (resampled.length <= bucket_idx) {
-      resampled.push({
-        date: Moment(referenceDate, 'YYYY-MM-DD HH:mm').toDate(),
-        data: []
-      })
+    else if (minGraph[minGraph.length - 1].y > parseFloat(datum.v)) {
+      minGraph[minGraph.length - 1].y = parseFloat(datum.v)
     }
-    resampled[bucket_idx].data.push(parseFloat(datum.v))
+    if (maxGraph.length === 0 || maxGraph[maxGraph.length - 1].date !== referenceDate) {
+      maxGraph.push({date: referenceDate, x: Moment(referenceDate, 'YYYY-MM-DD').toDate(), y: parseFloat(datum.v)})
+    }
+    else if (maxGraph[maxGraph.length - 1].y < parseFloat(datum.v)) {
+      maxGraph[maxGraph.length - 1].y = parseFloat(datum.v)
+    }
   })
-  return resampled
+  return [minGraph, maxGraph]
 }
 
-function createFunctionalGraphs(resampled) {
-  return [
-    resampled.map(bucket => ({
-      x: bucket.date,
-      y: bucket.data.reduce((min, value) => (value < min) ? value : min, 1000)
-    })),
-    resampled.map(bucket => ({
-      x: bucket.date,
-      y: bucket.data.reduce((max, value) => (value > max) ? value : max, -1000)
-    })),
-    resampled.map(bucket => ({
-      x: bucket.date,
-      y: bucket.data.reduce((total, value) => total + value, 0) / bucket.data.length
-    }))
-  ]
-}
-
-function addOverallMinMaxAvg(data) {
+function getOverallMin(data) {
   var min = null
-  var max = null
-  var avg = 0
 
   data.forEach(datum => {
     if (min === null || datum.y < min) {
       min = datum.y
     }
+  })
+
+  return min
+}
+
+function getOverallMax(data) {
+  var max = null
+
+  data.forEach(datum => {
     if (max === null || datum.y > max) {
       max = datum.y
     }
-    avg += datum.y
   })
 
-  avg = avg / data.length
-
-  return {min: min, max: max, avg: avg}
+  return max
 }
 
 function compileWaterTempStations(stations) {

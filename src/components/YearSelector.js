@@ -1,5 +1,5 @@
 import React from 'react'
-import { MIN, AVG, MAX } from 'reducers/coOps'
+import { MIN, MAX } from 'reducers/coOps'
 
 import './YearSelector.scss'
 
@@ -16,14 +16,11 @@ export default class YearSelector extends React.Component {
       if (!(dataset.year in years)) {
         years[dataset.year] = { year: dataset.year }
       }
-      if (dataset.sampleFunction === MIN) {
+      if (dataset.bound === MIN) {
         years[dataset.year].min = dataset.min
       }
-      else if (dataset.sampleFunction === MAX) {
+      else if (dataset.bound === MAX) {
         years[dataset.year].max = dataset.max
-      }
-      else if (dataset.sampleFunction === AVG) {
-        years[dataset.year].avg = dataset.avg
       }
     })
     var orderedYears = Object.keys(years).sort((a, b) => b - a).map(year => years[year])
@@ -42,9 +39,6 @@ export default class YearSelector extends React.Component {
               </td>
               <td>
                 {yearData.min.toFixed(2)}
-              </td>
-              <td>
-                {yearData.avg.toFixed(2)}
               </td>
               <td>
                 {yearData.max.toFixed(2)}

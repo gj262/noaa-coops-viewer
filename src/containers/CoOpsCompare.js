@@ -5,10 +5,9 @@ import { StaticVictoryLine } from 'components/StaticVictory'
 import d3_time_format from 'd3-time-format'
 import d3_scale from 'd3-scale'
 import { connect } from 'react-redux'
-import { actions as coOpsActions, MIN, AVG, MAX } from 'reducers/coOps'
+import { actions as coOpsActions, MIN, MAX } from 'reducers/coOps'
 import Moment from 'moment'
 import YearSelector from 'components/YearSelector'
-import SampleFunctionSelector from 'components/SampleFunctionSelector'
 import StationSelector from 'components/StationSelector'
 
 import './CoOpsCompare.scss'
@@ -17,7 +16,6 @@ const mapStateToProps = (state) => ({
   isFetching: state.coOps.isFetching,
   data: state.coOps.data,
   years: state.coOps.years,
-  sampleFunctions: state.coOps.sampleFunctions,
   errors: state.coOps.errors,
   selectedStationID: state.coOps.selectedStationID,
   stations: state.coOps.stations
@@ -29,11 +27,9 @@ class CoOpsCompare extends React.Component {
     linePalette: React.PropTypes.array,
     prefetchData: React.PropTypes.func,
     toggleYear: React.PropTypes.func,
-    toggleSampleFunction: React.PropTypes.func,
     isFetching: React.PropTypes.bool,
     data: React.PropTypes.array,
     years: React.PropTypes.array,
-    sampleFunctions: React.PropTypes.array,
     errors: React.PropTypes.array,
     stations: React.PropTypes.array.isRequired,
     selectedStationID: React.PropTypes.string.isRequired,
@@ -92,15 +88,14 @@ class CoOpsCompare extends React.Component {
           : this.state.chartData.find(
             chartDataset =>
               chartDataset.year === dataset.year &&
-              chartDataset.sampleFunction === dataset.sampleFunction
+              chartDataset.bound === dataset.bound
           );
       if (!chartDataset) {
-        chartDataset = Object.assign({}, dataset);
-        chartDataset.color = this.props.linePalette[dataset.year % this.props.linePalette.length];
+        chartDataset = Object.assign({}, dataset)
+        chartDataset.color = this.props.linePalette[dataset.year % this.props.linePalette.length]
       }
-      chartDataset.visible = nextProps.years.indexOf(dataset.year) !== -1 &&
-        nextProps.sampleFunctions.indexOf(dataset.sampleFunction) !== -1;
-      chartDataset.thin = !chartDataset.visible;
+      chartDataset.visible = nextProps.years.indexOf(dataset.year) !== -1
+      chartDataset.thin = !chartDataset.visible
       return chartDataset
     })
 
@@ -129,10 +124,10 @@ class CoOpsCompare extends React.Component {
     var min;
     var max;
     data.forEach(dataset => {
-      if (dataset.sampleFunction === MIN && (!min || dataset.min < min)) {
+      if (dataset.bound === MIN && (!min || dataset.min < min)) {
         min = dataset.min
       }
-      if (dataset.sampleFunction === MAX && (!max || dataset.max > max)) {
+      if (dataset.bound === MAX && (!max || dataset.max > max)) {
         max = dataset.max
       }
     })
@@ -153,10 +148,6 @@ class CoOpsCompare extends React.Component {
              selectedStationID={this.props.selectedStationID}
              stations={this.props.stations}
              selectStationID={this.props.selectStationID} />
-          <SampleFunctionSelector
-             selection={this.props.sampleFunctions}
-             sampleFunctions={[MIN, AVG, MAX]}
-             toggleSampleFunction={this.props.toggleSampleFunction} />
           {this.renderErrors()}
           {this.renderChart()}
         </div>
@@ -224,7 +215,7 @@ class CoOpsCompare extends React.Component {
   renderLine(dataset) {
     var instanceKey = this.state.selectedStationID +
         dataset.year +
-        dataset.sampleFunction +
+        dataset.bound +
         this.state.yTicks[0] +
         this.state.yTicks[this.state.yTicks.length - 1]
     return (
@@ -233,7 +224,7 @@ class CoOpsCompare extends React.Component {
          visible={dataset.visible}
          thin={dataset.thin}
          range={[this.state.yTicks[0], this.state.yTicks[this.state.yTicks.length - 1]]}
-         interpolation='basis'
+         interpolation='natural'
          label={dataset.visible ? `${dataset.year}` : ''}
          data={dataset.data}
          style={{
