@@ -10,7 +10,6 @@ const FETCHING_DATA = 'FETCHING_DATA'
 const DATA_FETCHED = 'DATA_FETCHED'
 const FETCH_ERROR = 'FETCH_ERROR'
 const TOGGLE_SAMPLE_FUNCTION_SELECTION = 'TOGGLE_SAMPLE_FUNCTION_SELECTION'
-const SELECT_STATION_ID = 'SELECT_STATION_ID'
 
 // Primitive Actions
 
@@ -36,13 +35,17 @@ const toggleYear = (year) => {
     else {
       years = years.filter(keep => keep !== year)
     }
-    dispatch(routeActions.push({ query: { years: years.join(',') } }))
+    dispatch(routeActions.push({ query: makeQuery(getState().coOps, { years: years.join(',') }) }))
   }
 }
 
 const toggleSampleFunction = (sampleFunction) => ({ type: TOGGLE_SAMPLE_FUNCTION_SELECTION, payload: sampleFunction })
 
-const selectStationID = (stationID) => ({ type: SELECT_STATION_ID, payload: stationID })
+const selectStationID = (stationID) => {
+  return (dispatch, getState) => {
+    dispatch(routeActions.push({ query: makeQuery(getState().coOps, { stn: stationID }) }))
+  }
+}
 
 export const actions = {
   prefetchData,
@@ -142,6 +145,17 @@ function dropAnomalousValues(data) {
   })
 }
 
+function makeQuery(state, change) {
+  return Object.assign(
+    {},
+    {
+      stn: state.selectedStationID,
+      years: state.years.join(',')
+    },
+    change
+  )
+}
+
 // Sampling functions
 
 export const MIN = 'Minimum'
@@ -200,16 +214,16 @@ export default createReducer(
       }
       return Object.assign({}, state, { sampleFunctions: sampleFunctions })
     },
-    [SELECT_STATION_ID]: (state, stationID) => {
-      return Object.assign({}, state, { selectedStationID: stationID, data: [] })
-    },
     [UPDATE_LOCATION]: (state, location) => {
       if (!location || !location.query) {
         return state
       }
-      if (location.query.years) {
+      if (location.query.years && location.query.years !== state.years.join(',')) {
         var years = location.query.years.split(/,/).map(year => parseInt(year, 10))
         state = Object.assign({}, state, { years: years })
+      }
+      if (location.query.stn && location.query.stn !== state.selectedStationID) {
+        state = Object.assign({}, state, { data: [], selectedStationID: location.query.stn })
       }
       return state
     }
