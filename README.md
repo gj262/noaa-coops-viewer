@@ -1,7 +1,7 @@
 NOAA CO-OPS Water Temperature Viewer
 ------------------------------------
 
-This is an alternate view of water temperatures provided by the [NOAA](http://tidesandcurrents.noaa.gov/map/).
+This is an alternate view of water temperature data provided by the [NOAA](http://tidesandcurrents.noaa.gov/map/).
 
 I created this as I'm interested in SF Bay water temperature changes because I swim with these [people](http://www.dolphinclub.org/). In reality though I do not obsess about the water temperature and just [enjoy the swim](http://www.sfchronicle.com/thetake/article/Dolphin-Club-The-oldest-goats-in-the-bay-6762877.php). But I thought it might be nice to be able to compare one year to the next more easily.
 

@@ -241,7 +241,7 @@ class CoOpsCompare extends React.Component {
   renderFooter() {
     return (
       <footer className='footer'>
-      An alternate view of data provided by NOAA CO-OPs. More details at: <a href='https://github.com/gj262/noaa-coops-viewer#noaa-co-ops-data-viewer'>noaa-coops-viewer</a>
+      An alternate yearly view of water temperature data provided by NOAA CO-OPs. More details at: <a href='https://github.com/gj262/noaa-coops-viewer#noaa-co-ops-water-temperature-viewer'>noaa-coops-viewer</a>
       </footer>
     )
   }
