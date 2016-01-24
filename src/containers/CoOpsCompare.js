@@ -150,6 +150,7 @@ class CoOpsCompare extends React.Component {
              selectStationID={this.props.selectStationID} />
           {this.renderErrors()}
           {this.renderChart()}
+          {this.renderFooter()}
         </div>
         <div>
           <YearSelector
@@ -234,6 +235,14 @@ class CoOpsCompare extends React.Component {
            },
            label: {color: dataset.color}
          }} />
+    )
+  }
+
+  renderFooter() {
+    return (
+      <footer className='footer'>
+      An alternate view of data provided by NOAA CO-OPs. More details at: <a href='https://github.com/gj262/noaa-coops-viewer#noaa-co-ops-data-viewer'>noaa-coops-viewer</a>
+      </footer>
     )
   }
 }

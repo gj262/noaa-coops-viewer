@@ -11,7 +11,7 @@ export default class YearSelector extends React.Component {
   };
 
   render () {
-    var years = {};
+    var years = {}
     this.props.data.forEach(dataset => {
       if (!(dataset.year in years)) {
         years[dataset.year] = { year: dataset.year }
@@ -23,6 +23,7 @@ export default class YearSelector extends React.Component {
         years[dataset.year].max = dataset.max
       }
     })
+
     var orderedYears = Object.keys(years).sort((a, b) => b - a).map(year => years[year])
     return (
         <table className='table table-condensed years'>
