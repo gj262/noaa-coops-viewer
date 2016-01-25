@@ -32,7 +32,9 @@ class CoOpsCompare extends React.Component {
     errors: React.PropTypes.array,
     stations: React.PropTypes.array.isRequired,
     selectedStationID: React.PropTypes.string.isRequired,
-    selectStationID: React.PropTypes.func.isRequired
+    selectStationID: React.PropTypes.func.isRequired,
+    pageWidth: React.PropTypes.number.isRequired,
+    pageHeight: React.PropTypes.number.isRequired
   };
 
   static defaultProps = {
@@ -139,6 +141,12 @@ class CoOpsCompare extends React.Component {
   }
 
   render () {
+    var chartWidth = this.props.pageWidth - 248;
+    if (chartWidth < 600) {
+      chartWidth = 600;
+    }
+    var chartAspectRatio = this.props.pageHeight / this.props.pageWidth;
+    chartAspectRatio = chartAspectRatio >= 1 ? 0.666 : (chartAspectRatio <= 0.5 ? 0.333 : 0.5)
     return (
       <div className='container-fluid'>
         <div className='split-pane'>
@@ -149,7 +157,7 @@ class CoOpsCompare extends React.Component {
               stations={this.props.stations}
               selectStationID={this.props.selectStationID} />
             {this.renderErrors()}
-            {this.renderChart()}
+            {this.renderChart(chartWidth, chartWidth * chartAspectRatio)}
             {this.renderFooter()}
           </div>
           <div className='right-pane'>
@@ -173,14 +181,15 @@ class CoOpsCompare extends React.Component {
     )
   }
 
-  renderChart() {
+  renderChart(width, height) {
     if (!this.state.chartData || this.state.chartData.length === 0) {
       return null
     }
     return (
       <VictoryChart
-        width={1024}
-        height={500}
+        key={`${width} ${height}`}
+        width={width}
+        height={height}
         scale={{
           x: d3_scale.time(),
           y: d3_scale.linear()
