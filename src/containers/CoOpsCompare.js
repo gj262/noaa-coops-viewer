@@ -1,5 +1,4 @@
 import React from 'react'
-import SplitPane from 'react-split-pane'
 import { VictoryAxis, VictoryChart } from 'victory'
 import { StaticVictoryLine } from 'components/StaticVictory'
 import d3_time_format from 'd3-time-format'
@@ -141,24 +140,26 @@ class CoOpsCompare extends React.Component {
 
   render () {
     return (
-      <SplitPane defaultSize='1024px'>
-        <div className='text-center'>
-          <h1>NOAA CO-OPs Water Temperatures</h1>
-          <StationSelector
-             selectedStationID={this.props.selectedStationID}
-             stations={this.props.stations}
-             selectStationID={this.props.selectStationID} />
-          {this.renderErrors()}
-          {this.renderChart()}
-          {this.renderFooter()}
+      <div className='container-fluid'>
+        <div className='split-pane'>
+          <div className='left-pane text-center'>
+            <h1>NOAA CO-OPs Water Temperatures</h1>
+            <StationSelector
+              selectedStationID={this.props.selectedStationID}
+              stations={this.props.stations}
+              selectStationID={this.props.selectStationID} />
+            {this.renderErrors()}
+            {this.renderChart()}
+            {this.renderFooter()}
+          </div>
+          <div className='right-pane'>
+            <YearSelector
+               data={this.state.chartData}
+               selection={this.props.years}
+               toggleYear={this.props.toggleYear} />
+          </div>
         </div>
-        <div>
-          <YearSelector
-             data={this.state.chartData}
-             selection={this.props.years}
-             toggleYear={this.props.toggleYear} />
-        </div>
-      </SplitPane>
+      </div>
     );
   }
 
