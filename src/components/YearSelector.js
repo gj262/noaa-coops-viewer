@@ -12,12 +12,19 @@ export default class YearSelector extends React.Component {
 
   render () {
     var years = {}
+    var overall = { minRange: {}, max: {} }
     this.props.data.forEach(dataset => {
       if (!(dataset.year in years)) {
         years[dataset.year] = { year: dataset.year }
       }
       if (dataset.bound === MIN) {
         years[dataset.year].min = dataset.min
+        if (!('min' in overall.minRange) || dataset.min < overall.minRange.min) {
+          overall.minRange.min = dataset.min
+        }
+        if (!('max' in overall.minRange) || dataset.min > overall.minRange.max) {
+          overall.minRange.max = dataset.min
+        }
       }
       else if (dataset.bound === MAX) {
         years[dataset.year].max = dataset.max
@@ -38,7 +45,7 @@ export default class YearSelector extends React.Component {
               <td>
                 {yearData.year}
               </td>
-              <td>
+              <td style={this.minValueStyle(yearData.min, overall.minRange)}>
                 {yearData.min.toFixed(2)}
               </td>
               <td>
@@ -57,5 +64,13 @@ export default class YearSelector extends React.Component {
 
   yearSelect(year) {
     this.props.toggleYear(year)
+  }
+
+  minValueStyle(value, range) {
+    var index = range.max === range.min ? 0 : Math.floor(4 * ((value - range.min) / (range.max - range.min)));
+    return {
+      background: ['#2f56e0', '#2d64f5', '#2f8dff', '#33abf9', '#34ccff'][index],
+      color: ['white', 'white', 'black', 'black', 'black'][index]
+    };
   }
 }
