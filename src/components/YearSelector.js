@@ -12,22 +12,18 @@ export default class YearSelector extends React.Component {
 
   render () {
     var years = {}
-    var overall = { minRange: {}, max: {} }
+    var overall = { minRange: {}, maxRange: {} }
     this.props.data.forEach(dataset => {
       if (!(dataset.year in years)) {
         years[dataset.year] = { year: dataset.year }
       }
       if (dataset.bound === MIN) {
         years[dataset.year].min = dataset.min
-        if (!('min' in overall.minRange) || dataset.min < overall.minRange.min) {
-          overall.minRange.min = dataset.min
-        }
-        if (!('max' in overall.minRange) || dataset.min > overall.minRange.max) {
-          overall.minRange.max = dataset.min
-        }
+        this.updateRange(dataset.min, overall.minRange)
       }
       else if (dataset.bound === MAX) {
         years[dataset.year].max = dataset.max
+        this.updateRange(dataset.max, overall.maxRange)
       }
     })
 
@@ -48,7 +44,7 @@ export default class YearSelector extends React.Component {
               <td style={this.minValueStyle(yearData.min, overall.minRange)}>
                 {yearData.min.toFixed(2)}
               </td>
-              <td>
+              <td style={this.maxValueStyle(yearData.max, overall.maxRange)}>
                 {yearData.max.toFixed(2)}
               </td>
             </tr>
@@ -56,6 +52,15 @@ export default class YearSelector extends React.Component {
           </tbody>
         </table>
     )
+  }
+
+  updateRange(value, range) {
+    if (!('min' in range) || value < range.min) {
+      range.min = value
+    }
+    if (!('max' in range) || value > range.max) {
+      range.max = value
+    }
   }
 
   isChecked(year) {
@@ -71,6 +76,14 @@ export default class YearSelector extends React.Component {
     return {
       background: ['#2f56e0', '#2d64f5', '#2f8dff', '#33abf9', '#34ccff'][index],
       color: ['white', 'white', 'black', 'black', 'black'][index]
+    };
+  }
+
+  maxValueStyle(value, range) {
+    var index = range.max === range.min ? 0 : Math.floor(4 * ((value - range.min) / (range.max - range.min)));
+    return {
+      background: ['rgb(255,232,120)', 'rgb(255,192,60)', 'rgb(255,160,0)', 'rgb(255,96,0)', 'rgb(255,50,0)'][index],
+      color: ['black', 'black', 'black', 'black', 'white'][index]
     };
   }
 }
