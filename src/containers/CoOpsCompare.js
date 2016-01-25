@@ -236,7 +236,7 @@ class CoOpsCompare extends React.Component {
          thin={dataset.thin}
          range={[this.state.yTicks[0], this.state.yTicks[this.state.yTicks.length - 1]]}
          interpolation='natural'
-         label={dataset.visible ? `${dataset.year}` : ''}
+         label={dataset.visible && dataset.bound === MIN ? `${dataset.year}` : ''}
          data={dataset.data}
          style={{
            data: {
