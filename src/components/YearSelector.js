@@ -71,19 +71,20 @@ export default class YearSelector extends React.Component {
     this.props.toggleYear(year)
   }
 
+  // Dave Thompson's palette
+  // http://research.jisao.washington.edu/wallace/palette.gif
+
   minValueStyle(value, range) {
     var index = range.max === range.min ? 0 : Math.floor(4 * ((value - range.min) / (range.max - range.min)));
     return {
-      background: ['#2f56e0', '#2d64f5', '#2f8dff', '#33abf9', '#34ccff'][index],
-      color: ['white', 'white', 'black', 'black', 'black'][index]
+      background: ['rgb(60,160,240)', 'rgb(80,180,250)', 'rgb(130,210,255)', 'rgb(160,240,255)', 'rgb(200,250,255)'][index]
     };
   }
 
   maxValueStyle(value, range) {
     var index = range.max === range.min ? 0 : Math.floor(4 * ((value - range.min) / (range.max - range.min)));
     return {
-      background: ['rgb(255,232,120)', 'rgb(255,192,60)', 'rgb(255,160,0)', 'rgb(255,96,0)', 'rgb(255,50,0)'][index],
-      color: ['black', 'black', 'black', 'black', 'white'][index]
+      background: ['rgb(255,232,120)', 'rgb(255,192,60)', 'rgb(255,160,0)', 'rgb(255,96,0)', 'rgb(255,50,0)'][index]
     };
   }
 }
