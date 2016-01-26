@@ -5,7 +5,7 @@ This is an alternate view of water temperature data provided by the [NOAA](http:
 
 Demo at:  https://noaa-coops-viewer.herokuapp.com/
 
-I created this as I'm interested in SF Bay water temperature changes because I swim with these [people](http://www.dolphinclub.org/). In reality though I do not obsess about the water temperature and just [enjoy the swim](http://www.sfchronicle.com/thetake/article/Dolphin-Club-The-oldest-goats-in-the-bay-6762877.php). However I thought it might be nice to compare one year to another more intuitively.
+I created this as I'm interested in SF Bay water temperature over the years because I swim with these [people](http://www.dolphinclub.org/). Though the temperature has no ultimate bearing on whether I swim or not. I just [enjoy the swim](http://www.sfchronicle.com/thetake/article/Dolphin-Club-The-oldest-goats-in-the-bay-6762877.php).
 
 So this is mostly an exercise in a single page app using [React](https://facebook.github.io/react/), [Redux](https://github.com/rackt/redux) and associated tools.
 
@@ -17,4 +17,12 @@ The chart comes from the excellent [Victory](http://victory.formidable.com/) pro
 
 `npm install && npm start`
 
-Then connect to https://localhost:5000.
+Then connect to http://localhost:5000/
+
+### Dev
+
+* Run once: `npm install`
+* Build & rebuild when files change: `webpack -w`
+* Serve built assets and proxy connections to NOAA: `node proxy.js`
+
+Connect to: http://localhost:9090/
