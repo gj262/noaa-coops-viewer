@@ -7,7 +7,7 @@
 // line numbers w.r.t. the point where the debug() call is made.
 
 // Each JS file should have a debug definition defined relating to its
-// path. e.g. var debug = window.debug('components/graph/diagram');
+// path. e.g. const debug = window.debug('components/graph/diagram');
 
 // Enabling debug output is achieved through the developer console with:
 // window.debug.enable('path/to/file,path/to/another,-path/to/something)

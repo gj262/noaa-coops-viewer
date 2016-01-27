@@ -3,11 +3,15 @@ import { MIN, MAX } from 'reducers/coOps'
 
 import './YearSelector.scss'
 
+const debug = window.debug('components/year-selector');
+
 export default class YearSelector extends React.Component {
   static propTypes = {
     data: React.PropTypes.array.isRequired,
     selection: React.PropTypes.array.isRequired,
-    toggleYear: React.PropTypes.func
+    toggleYearSelection: React.PropTypes.func.isRequired,
+    setHoverYear: React.PropTypes.func.isRequired,
+    clearHoverYear: React.PropTypes.func.isRequired
   };
 
   render () {
@@ -29,7 +33,7 @@ export default class YearSelector extends React.Component {
 
     var orderedYears = Object.keys(years).sort((a, b) => b - a).map(year => years[year])
     return (
-        <table className='table table-condensed years'>
+        <table className='table table-condensed table-hover years'>
           <thead>
             <tr>
               <th></th>
@@ -40,7 +44,10 @@ export default class YearSelector extends React.Component {
           </thead>
           <tbody>
           {orderedYears.map(yearData => (
-            <tr key={yearData.year}>
+            <tr
+              key={yearData.year}
+              onMouseOver={this.onMouseOverYear.bind(this, yearData)}
+              onMouseOut={this.onMouseOutYear.bind(this, yearData)}>
               <td>
                 <input type='checkbox' checked={this.isChecked(yearData.year)} onChange={this.yearSelect.bind(this, yearData.year)} />
               </td>
@@ -74,7 +81,17 @@ export default class YearSelector extends React.Component {
   }
 
   yearSelect(year) {
-    this.props.toggleYear(year)
+    this.props.toggleYearSelection(year)
+  }
+
+  onMouseOverYear(yearData) {
+    debug(`mouseover ${yearData.year}`)
+    this.props.setHoverYear(yearData.year)
+  }
+
+  onMouseOutYear(yearData) {
+    debug(`mouseout ${yearData.year}`)
+    this.props.clearHoverYear()
   }
 
   // Dave Thompson's palette

@@ -17,7 +17,8 @@ const mapStateToProps = (state) => ({
   years: state.coOps.years,
   errors: state.coOps.errors,
   selectedStationID: state.coOps.selectedStationID,
-  stations: state.coOps.stations
+  stations: state.coOps.stations,
+  hoverYear: state.coOps.hoverYear
 })
 
 class CoOpsCompare extends React.Component {
@@ -25,10 +26,10 @@ class CoOpsCompare extends React.Component {
     store: React.PropTypes.object,
     linePalette: React.PropTypes.array,
     prefetchData: React.PropTypes.func,
-    toggleYear: React.PropTypes.func,
     isFetching: React.PropTypes.bool,
     data: React.PropTypes.array,
     years: React.PropTypes.array,
+    hoverYear: React.PropTypes.number,
     errors: React.PropTypes.array,
     stations: React.PropTypes.array.isRequired,
     selectedStationID: React.PropTypes.string.isRequired,
@@ -95,7 +96,7 @@ class CoOpsCompare extends React.Component {
         chartDataset = Object.assign({}, dataset)
         chartDataset.color = this.props.linePalette[dataset.year % this.props.linePalette.length]
       }
-      chartDataset.visible = nextProps.years.indexOf(dataset.year) !== -1
+      chartDataset.visible = nextProps.years.indexOf(dataset.year) !== -1 || nextProps.hoverYear === dataset.year
       chartDataset.thin = !chartDataset.visible
       return chartDataset
     })
@@ -162,9 +163,9 @@ class CoOpsCompare extends React.Component {
           </div>
           <div className='right-pane'>
             <YearSelector
-               data={this.state.chartData}
-               selection={this.props.years}
-               toggleYear={this.props.toggleYear} />
+              data={this.state.chartData}
+              selection={this.props.years}
+              {...this.props} />
           </div>
         </div>
       </div>

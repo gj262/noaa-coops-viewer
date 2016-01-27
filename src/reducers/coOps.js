@@ -9,12 +9,16 @@ import { routeActions, UPDATE_LOCATION } from 'redux-simple-router'
 const FETCHING_DATA = 'FETCHING_DATA'
 const DATA_FETCHED = 'DATA_FETCHED'
 const FETCH_ERROR = 'FETCH_ERROR'
+const SET_HOVER_YEAR = 'SET_HOVER_YEAR'
+const CLEAR_HOVER_YEAR = 'CLEAR_HOVER_YEAR'
 
 // Primitive Actions
 
 const fetchingData = () => ({ type: FETCHING_DATA })
 const dataFetched = (year, data) => ({ type: DATA_FETCHED, payload: [year, data] })
 const fetchError = (year, message) => ({ type: FETCH_ERROR, payload: [year, message] })
+const setHoverYear = (year) => ({ type: SET_HOVER_YEAR, payload: [year] })
+const clearHoverYear = () => ({ type: CLEAR_HOVER_YEAR })
 
 // Exported Actions
 
@@ -25,7 +29,7 @@ const prefetchData = () => {
   }
 }
 
-const toggleYear = (year) => {
+const toggleYearSelection = (year) => {
   return (dispatch, getState) => {
     var years = getState().coOps.years
     if (years.indexOf(year) === -1) {
@@ -46,8 +50,10 @@ const selectStationID = (stationID) => {
 
 export const actions = {
   prefetchData,
-  toggleYear,
-  selectStationID
+  toggleYearSelection,
+  selectStationID,
+  setHoverYear,
+  clearHoverYear
 }
 
 function prefetchFromYear(year, dispatch, getState) {
@@ -168,7 +174,8 @@ export default createReducer(
     data: [],
     errors: [],
     errorInstance: 0,
-    stations: compileWaterTempStations(stations)
+    stations: compileWaterTempStations(stations),
+    hoverYear: null
   },
   // reducers
   {
@@ -209,6 +216,16 @@ export default createReducer(
         state = Object.assign({}, state, { data: [], selectedStationID: location.query.stn })
       }
       return state
+    },
+    [SET_HOVER_YEAR]: (state, [year]) => {
+      return Object.assign({}, state, {
+        hoverYear: year
+      })
+    },
+    [CLEAR_HOVER_YEAR]: (state) => {
+      return Object.assign({}, state, {
+        hoverYear: null
+      })
     }
   }
 )
