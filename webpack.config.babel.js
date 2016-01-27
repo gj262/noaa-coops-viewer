@@ -29,7 +29,6 @@ const webpackConfig = {
     vendor: [
       'd3-scale',
       'd3-time-format',
-      'history',
       'moment',
       'react',
       'react-redux',

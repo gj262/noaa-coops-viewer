@@ -31,6 +31,12 @@ export default class YearSelector extends React.Component {
     return (
         <table className='table table-condensed years'>
           <thead>
+            <tr>
+              <th></th>
+              <th></th>
+              <th>Min</th>
+              <th>Max</th>
+            </tr>
           </thead>
           <tbody>
           {orderedYears.map(yearData => (

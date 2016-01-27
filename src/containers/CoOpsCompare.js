@@ -141,7 +141,7 @@ class CoOpsCompare extends React.Component {
   }
 
   render () {
-    var chartWidth = this.props.pageWidth - 248;
+    var chartWidth = this.props.pageWidth - 208;
     if (chartWidth < 600) {
       chartWidth = 600;
     }
