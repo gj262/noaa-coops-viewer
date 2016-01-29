@@ -3,37 +3,18 @@ import { VictoryAxis, VictoryChart } from 'victory'
 import { StaticVictoryLine } from 'components/StaticVictory'
 import d3_time_format from 'd3-time-format'
 import d3_scale from 'd3-scale'
-import { connect } from 'react-redux'
-import { actions as coOpsActions, MIN, MAX } from 'reducers/coOps'
+import { MIN, MAX } from 'reducers/coOps'
 import Moment from 'moment'
-import YearSelector from 'components/YearSelector'
-import StationSelector from 'components/StationSelector'
 
-import './CoOpsCompare.scss'
+import './Chart.scss'
 
-const mapStateToProps = (state) => ({
-  isFetching: state.coOps.isFetching,
-  data: state.coOps.data,
-  years: state.coOps.years,
-  errors: state.coOps.errors,
-  selectedStationID: state.coOps.selectedStationID,
-  stations: state.coOps.stations,
-  hoverYear: state.coOps.hoverYear
-})
-
-class CoOpsCompare extends React.Component {
+export default class Chart extends React.Component {
   static propTypes = {
-    store: React.PropTypes.object,
     linePalette: React.PropTypes.array,
-    prefetchData: React.PropTypes.func,
-    isFetching: React.PropTypes.bool,
     data: React.PropTypes.array,
     years: React.PropTypes.array,
     hoverYear: React.PropTypes.number,
-    errors: React.PropTypes.array,
-    stations: React.PropTypes.array.isRequired,
     selectedStationID: React.PropTypes.string.isRequired,
-    selectStationID: React.PropTypes.func.isRequired,
     pageWidth: React.PropTypes.number.isRequired,
     pageHeight: React.PropTypes.number.isRequired
   };
@@ -74,15 +55,7 @@ class CoOpsCompare extends React.Component {
     return months;
   }
 
-  componentWillMount() {
-    this.props.prefetchData()
-  }
-
   componentWillReceiveProps(nextProps) {
-    if (nextProps.selectedStationID !== this.props.selectedStationID) {
-      this.props.prefetchData()
-    }
-
     // Map to display data as new data is received.
     var chartData = nextProps.data.map(dataset => {
       var chartDataset = !this.state.chartData
@@ -142,55 +115,24 @@ class CoOpsCompare extends React.Component {
   }
 
   render () {
+    if (!this.state.chartData || this.state.chartData.length === 0) {
+      return null
+    }
+
     var chartWidth = this.props.pageWidth - 208;
     if (chartWidth < 600) {
       chartWidth = 600;
     }
+
     var chartAspectRatio = this.props.pageHeight / this.props.pageWidth;
     chartAspectRatio = chartAspectRatio >= 1 ? 0.666 : (chartAspectRatio <= 0.5 ? 0.333 : 0.5)
-    return (
-      <div className='container-fluid'>
-        <div className='split-pane'>
-          <div className='left-pane text-center'>
-            <h1>NOAA CO-OPs Water Temperatures</h1>
-            <StationSelector
-              selectedStationID={this.props.selectedStationID}
-              stations={this.props.stations}
-              selectStationID={this.props.selectStationID} />
-            {this.renderErrors()}
-            {this.renderChart(chartWidth, chartWidth * chartAspectRatio)}
-            {this.renderFooter()}
-          </div>
-          <div className='right-pane'>
-            <YearSelector
-              data={this.state.chartData}
-              selection={this.props.years}
-              {...this.props} />
-          </div>
-        </div>
-      </div>
-    );
-  }
+    var chartHeight = chartWidth * chartAspectRatio
 
-  renderErrors() {
-    return this.props.errors.map(
-      error => (
-        <div key={error.instance} className='alert alert-warning' role='alert'>
-          Could not load data for {error.year}. {error.message}
-        </div>
-      )
-    )
-  }
-
-  renderChart(width, height) {
-    if (!this.state.chartData || this.state.chartData.length === 0) {
-      return null
-    }
     return (
       <VictoryChart
-        key={`${width} ${height}`}
-        width={width}
-        height={height}
+        key={`${chartWidth} ${chartHeight}`}
+        width={chartWidth}
+        height={chartHeight}
         scale={{
           x: d3_scale.time(),
           y: d3_scale.linear()
@@ -225,7 +167,7 @@ class CoOpsCompare extends React.Component {
   }
 
   renderLine(dataset) {
-    var instanceKey = this.state.selectedStationID +
+    var instanceKey = this.props.selectedStationID +
         dataset.year +
         dataset.bound +
         this.state.yTicks[0] +
@@ -248,14 +190,4 @@ class CoOpsCompare extends React.Component {
          }} />
     )
   }
-
-  renderFooter() {
-    return (
-      <footer className='footer'>
-      An alternate yearly view of water temperature data provided by NOAA CO-OPs. More details at: <a href='https://github.com/gj262/noaa-coops-viewer#noaa-co-ops-water-temperature-viewer'>noaa-coops-viewer</a>
-      </footer>
-    )
-  }
 }
-
-export default connect(mapStateToProps, coOpsActions)(CoOpsCompare)

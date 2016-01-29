@@ -10,16 +10,12 @@ export default class Root extends React.Component {
   };
 
   render () {
-    const content = (
-      <Router history={this.props.history}>
-        {this.props.routes}
-      </Router>
-    )
-
     return (
-        <Provider store={this.props.store}>
-          {content}
-        </Provider>
+      <Provider store={this.props.store}>
+        <Router history={this.props.history}>
+          {this.props.routes}
+        </Router>
+      </Provider>
     )
   }
 }
