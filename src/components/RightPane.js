@@ -5,12 +5,13 @@ import './RightPane.scss'
 
 export default class RightPane extends React.Component {
   static propTypes = {
-    years: React.PropTypes.array
+    years: React.PropTypes.array,
+    width: React.PropTypes.number.isRequired
   };
 
   render () {
     return (
-      <div className='right-pane'>
+      <div className='right-pane' style={{width: `${this.props.width}px`}}>
         <YearSelector
           selection={this.props.years}
           {...this.props} />

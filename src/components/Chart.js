@@ -15,8 +15,8 @@ export default class Chart extends React.Component {
     years: React.PropTypes.array,
     hoverYear: React.PropTypes.number,
     selectedStationID: React.PropTypes.string.isRequired,
-    pageWidth: React.PropTypes.number.isRequired,
-    pageHeight: React.PropTypes.number.isRequired
+    width: React.PropTypes.number.isRequired,
+    height: React.PropTypes.number.isRequired
   };
 
   static defaultProps = {
@@ -119,20 +119,20 @@ export default class Chart extends React.Component {
       return null
     }
 
-    var chartWidth = this.props.pageWidth - 208;
-    if (chartWidth < 600) {
-      chartWidth = 600;
+    var width = this.props.width;
+    if (width < 600) {
+      width = 600;
     }
 
-    var chartAspectRatio = this.props.pageHeight / this.props.pageWidth;
-    chartAspectRatio = chartAspectRatio >= 1 ? 0.666 : (chartAspectRatio <= 0.5 ? 0.333 : 0.5)
-    var chartHeight = chartWidth * chartAspectRatio
+    var aspectRatio = this.props.height / this.props.width;
+    aspectRatio = aspectRatio >= 1 ? 0.666 : (aspectRatio <= 0.5 ? 0.333 : 0.5)
+    var height = width * aspectRatio
 
     return (
       <VictoryChart
-        key={`${chartWidth} ${chartHeight}`}
-        width={chartWidth}
-        height={chartHeight}
+        key={`${width} ${height}`}
+        width={width}
+        height={height}
         scale={{
           x: d3_scale.time(),
           y: d3_scale.linear()

@@ -13,7 +13,9 @@ const mapStateToProps = (state) => ({
 class HomeView extends React.Component {
   static propTypes = {
     prefetchData: React.PropTypes.func.isRequired,
-    selectedStationID: React.PropTypes.string.isRequired
+    selectedStationID: React.PropTypes.string.isRequired,
+    pageWidth: React.PropTypes.number.isRequired,
+    pageHeight: React.PropTypes.number.isRequired
   };
 
   componentWillMount() {
@@ -27,11 +29,13 @@ class HomeView extends React.Component {
   }
 
   render () {
+    const rightPaneWidth = 208;
+    const leftPaneWidth = this.props.pageWidth - rightPaneWidth
     return (
       <div className='container-fluid'>
         <div className='split-pane'>
-          <LeftPane {...this.props} />
-          <RightPane {...this.props} />
+          <LeftPane {...this.props} width={leftPaneWidth} right={rightPaneWidth} height={this.props.pageHeight} />
+          <RightPane {...this.props} width={rightPaneWidth}  height={this.props.pageHeight} />
         </div>
       </div>
     )

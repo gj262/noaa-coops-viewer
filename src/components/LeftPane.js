@@ -6,12 +6,13 @@ import './LeftPane.scss'
 
 export default class LeftPane extends React.Component {
   static propTypes = {
-    errors: React.PropTypes.array.isRequired
+    errors: React.PropTypes.array.isRequired,
+    right: React.PropTypes.number.isRequired
   };
 
   render () {
     return (
-      <div className='left-pane text-center'>
+      <div className='left-pane text-center' style={{right: `${this.props.right}px`}}>
         <h1>NOAA CO-OPs Water Temperatures</h1>
         <StationSelector {...this.props} />
         {this.renderErrors()}
