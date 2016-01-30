@@ -41,7 +41,9 @@ export default class Chart extends React.Component {
       chartData: [],
       availableYears: [],
       xTicks: this.makeXTicks(),
-      yTicks: []
+      xDomain: this.makeXDomain(),
+      yTicks: [],
+      yDomain: []
     }
   }
 
@@ -53,6 +55,10 @@ export default class Chart extends React.Component {
       start.add(1, 'month')
     }
     return months;
+  }
+
+  makeXDomain() {
+    return [Moment([2012]), Moment([2012]).add(1, 'year')]
   }
 
   componentWillReceiveProps(nextProps) {
@@ -84,11 +90,13 @@ export default class Chart extends React.Component {
     });
 
     var yTicks = this.makeYTicks(nextProps.data)
+    var yDomain = this.makeYDomain(yTicks)
 
     this.setState({
       chartData,
       availableYears,
-      yTicks
+      yTicks,
+      yDomain
     })
   }
 
@@ -114,6 +122,10 @@ export default class Chart extends React.Component {
     return ticks
   }
 
+  makeYDomain(ticks) {
+    return [ticks[0], ticks[ticks.length - 1]]
+  }
+
   render () {
     if (!this.state.chartData || this.state.chartData.length === 0) {
       return null
@@ -136,6 +148,10 @@ export default class Chart extends React.Component {
         scale={{
           x: d3_scale.time(),
           y: d3_scale.linear()
+        }}
+        domain={{
+          x: this.state.xDomain,
+          y: this.state.yDomain
         }}>
         {this.renderYAxis()}
         {this.renderXAxis()}
