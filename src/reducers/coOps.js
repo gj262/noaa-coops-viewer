@@ -96,11 +96,18 @@ function fetchOne(year, station, done) {
     if ('error' in json) {
       return done(null, fetchError(year, json.error.message))
     }
-    done(dropAnomalousValues(dropEmptyValues(json.data)), null)
+    done(
+      dropAnomalousValues(
+        parseValues(
+          json.data
+        )
+      ),
+      null
+    )
   })
 }
 
-function dropEmptyValues(data) {
+function parseValues(data) {
   data = data || []
   return data.filter(datum => {
     if ('t' in datum && 'v' in datum && datum.v) {
@@ -184,11 +191,12 @@ export default createReducer(
     },
     [DATA_FETCHED]: (state, [year, data]) => {
       var [min, max] = createDailyMinMaxGraphs(data)
+      var partial = detectPartial(min, year)
       return Object.assign({}, state, {
         isFetching: false,
         data: state.data.concat(
-          { year: year, bound: MIN, data: min, min: getOverallMin(min) },
-          { year: year, bound: MAX, data: max, max: getOverallMax(max) }
+          { year: year, bound: MIN, data: min, min: getOverallMin(min), partial: partial },
+          { year: year, bound: MAX, data: max, max: getOverallMax(max), partial: partial }
         )
       })
     },
@@ -234,20 +242,22 @@ function createDailyMinMaxGraphs(data) {
   var minGraph = []
   var maxGraph = []
   data.forEach(datum => {
-    var referenceDate = 2012 + datum.t.substr(4, 6)
-    if (minGraph.length === 0 || minGraph[minGraph.length - 1].date !== referenceDate) {
-      minGraph.push({date: referenceDate, x: Moment(referenceDate, 'YYYY-MM-DD').toDate(), y: parseFloat(datum.v)})
+    var referenceDate = 2012 + datum.t.substr(4, 6);
+    if (minGraph.length === 0 || minGraph[minGraph.length - 1].dateStr !== referenceDate) {
+      let date = Moment(referenceDate, 'YYYY-MM-DD');
+      minGraph.push({dateObj: date, dateStr: referenceDate, x: date.toDate(), y: datum.v});
     }
-    else if (minGraph[minGraph.length - 1].y > parseFloat(datum.v)) {
-      minGraph[minGraph.length - 1].y = parseFloat(datum.v)
+    else if (minGraph[minGraph.length - 1].y > datum.v) {
+      minGraph[minGraph.length - 1].y = datum.v
     }
-    if (maxGraph.length === 0 || maxGraph[maxGraph.length - 1].date !== referenceDate) {
-      maxGraph.push({date: referenceDate, x: Moment(referenceDate, 'YYYY-MM-DD').toDate(), y: parseFloat(datum.v)})
+    if (maxGraph.length === 0 || maxGraph[maxGraph.length - 1].dateStr !== referenceDate) {
+      let date = Moment(referenceDate, 'YYYY-MM-DD');
+      maxGraph.push({dateObj: date, dateStr: referenceDate, x: date.toDate(), y: datum.v})
     }
-    else if (maxGraph[maxGraph.length - 1].y < parseFloat(datum.v)) {
-      maxGraph[maxGraph.length - 1].y = parseFloat(datum.v)
+    else if (maxGraph[maxGraph.length - 1].y < datum.v) {
+      maxGraph[maxGraph.length - 1].y = datum.v
     }
-  })
+  });
   return [minGraph, maxGraph]
 }
 
@@ -273,6 +283,24 @@ function getOverallMax(data) {
   })
 
   return max
+}
+
+function detectPartial(data, year) {
+  var start = data[0].dateObj.clone().startOf('year');
+  var end = start.clone().endOf('year');
+  if (data[0].dateObj.format('MM-DD') !== start.format('MM-DD')) {
+    console.warn(`the data for ${year} did not begin at the start of the year`);
+    return true;
+  }
+  if (data[data.length - 1].dateObj.format('MM-DD') !== end.format('MM-DD')) {
+    console.warn(`the data for ${year} did not end at the end of the year`);
+    return true;
+  }
+  if (data.length < 330) {
+    console.warn(`data is missing for ${year}`);
+    return true;
+  }
+  return false;
 }
 
 function compileWaterTempStations(stations) {
