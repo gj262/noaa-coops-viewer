@@ -76,6 +76,7 @@ export default class Chart extends React.Component {
         chartDataset.color = this.props.linePalette[dataset.year % this.props.linePalette.length]
       }
       chartDataset.visible = nextProps.years.indexOf(dataset.year) !== -1 || nextProps.hoverYear === dataset.year
+      chartDataset.mouseover = nextProps.hoverYear === dataset.year
       chartDataset.thin = !chartDataset.visible
       return chartDataset
     })
@@ -191,19 +192,22 @@ export default class Chart extends React.Component {
     return (
        <StaticVictoryLine
          key={instanceKey}
-         visible={dataset.visible}
-         thin={dataset.thin}
+         updateAttrs={`${dataset.visible} ${dataset.thin} ${dataset.mouseover} ${this.state.yTicks[0]} ${this.state.yTicks[this.state.yTicks.length - 1]}`}
          range={[this.state.yTicks[0], this.state.yTicks[this.state.yTicks.length - 1]]}
          interpolation='natural'
          label={dataset.visible && dataset.bound === MIN ? `${dataset.year}` : ''}
          data={dataset.data}
          style={{
-           data: {
-             stroke: dataset.visible ? dataset.color : 'lightGrey',
-             'strokeWidth': dataset.visible ? 2 : dataset.thin ? 0.5 : 0
-           },
+           data: this.getLineStyle(dataset),
            label: {color: dataset.color}
          }} />
     )
+  }
+
+  getLineStyle(dataset) {
+    return {
+      stroke: dataset.mouseover ? '#000000' : (dataset.visible ? dataset.color : 'lightGrey'),
+      strokeWidth: dataset.visible ? 2 : dataset.thin ? 0.5 : 0
+    }
   }
 }
