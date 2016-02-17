@@ -3,7 +3,7 @@ NOAA CO-OPS Water Temperature Viewer
 
 This is an alternate view of water temperature data provided by the [NOAA](http://tidesandcurrents.noaa.gov/map/).
 
-Demo at:  https://noaa-coops-viewer.herokuapp.com/
+Demo at:  https://noaa-coops-viewer.vmbed.com/
 
 I created this as I'm interested in SF Bay water temperature over the years because I swim with these [people](http://www.dolphinclub.org/). Though the temperature has no ultimate bearing on whether I swim or not. I just [enjoy the swim](http://www.sfchronicle.com/thetake/article/Dolphin-Club-The-oldest-goats-in-the-bay-6762877.php).
 
