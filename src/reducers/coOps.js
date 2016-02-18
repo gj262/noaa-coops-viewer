@@ -353,7 +353,7 @@ function detectBogusYears(data) {
   var deviations = completeYears.map(dataset => dataset[MAX].max - dataset[MIN].min);
   if (deviations.length >= 2) {
     var avgDeviation = deviations.reduce((previous, current) => previous + current) / deviations.length;
-    completeYears.forEach(dataset => {
+    data.forEach(dataset => {
       dataset.bogus = (dataset[MAX].max - dataset[MIN].min > avgDeviation * BOGUS_DEVIATION_FACTOR);
     });
   }
