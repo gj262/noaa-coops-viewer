@@ -25,9 +25,9 @@ export default class LeftPane extends React.Component {
   renderErrors() {
     return this.props.errors.map(
       error => (
-        <div key={error.instance} className='alert alert-warning' role='alert'>
+        <h3 key={error.instance} className='alert alert-warning col-xs-6 col-xs-offset-3' role='alert'>
           Could not load data for {error.year}. {error.message}
-        </div>
+        </h3>
       )
     )
   }

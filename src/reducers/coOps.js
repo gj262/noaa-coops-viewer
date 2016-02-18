@@ -104,6 +104,9 @@ function fetchOne(year, station, done) {
       ),
       null
     )
+  }).catch(error => {
+    console.log('request failed', error);
+    return done(null, fetchError(year, 'Failed to fetch data'));
   })
 }
 
