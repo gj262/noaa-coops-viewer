@@ -89,7 +89,7 @@ export default class Chart extends React.Component {
       }
     });
 
-    var yTicks = this.makeYTicks(nextProps.data, nextProps.years)
+    var yTicks = this.makeYTicks(nextProps.data)
     var yDomain = this.makeYDomain(yTicks)
 
     this.setState({
@@ -100,13 +100,13 @@ export default class Chart extends React.Component {
     })
   }
 
-  makeYTicks(data, yearsSelected) {
+  makeYTicks(data) {
     if (!data || data.length === 0) {
       return []
     }
     var min;
     var max;
-    data.filter(dataset => !dataset.bogus || yearsSelected.indexOf(dataset.year) !== -1).forEach(dataset => {
+    data.forEach(dataset => {
       if (!min || dataset[MIN].min < min) {
         min = dataset[MIN].min
       }
@@ -127,13 +127,7 @@ export default class Chart extends React.Component {
   }
 
   render () {
-    if (!this.state.chartData) {
-      return null
-    }
-
-    var goodYears = this.state.chartData.filter(dataset => !dataset.bogus || this.props.years.indexOf(dataset.year) !== -1);
-
-    if (goodYears.length === 0) {
+    if (!this.state.chartData || this.state.chartData.length === 0) {
       return null
     }
 
@@ -161,8 +155,8 @@ export default class Chart extends React.Component {
         }}>
         {this.renderYAxis()}
         {this.renderXAxis()}
-        {goodYears.map(dataset => this.renderLine(dataset, MIN))}
-        {goodYears.map(dataset => this.renderLine(dataset, MAX))}
+        {this.state.chartData.map(dataset => this.renderLine(dataset, MIN))}
+        {this.state.chartData.map(dataset => this.renderLine(dataset, MAX))}
       </VictoryChart>
     )
   }
