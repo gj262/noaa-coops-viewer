@@ -64,19 +64,11 @@ export default class Chart extends React.Component {
   componentWillReceiveProps(nextProps) {
     // Map to display data as new data is received.
     var chartData = nextProps.data.map(dataset => {
-      var chartDataset = !this.state.chartData
-          ? null
-          : this.state.chartData.find(
-            chartDataset =>
-              chartDataset.year === dataset.year
-          );
-      if (!chartDataset) {
-        chartDataset = Object.assign({}, dataset)
-        chartDataset.color = this.props.linePalette[dataset.year % this.props.linePalette.length]
-      }
+      var chartDataset = Object.assign({}, dataset)
+      chartDataset.color = this.props.linePalette[dataset.year % this.props.linePalette.length]
       chartDataset.visible = nextProps.years.indexOf(dataset.year) !== -1 || nextProps.hoverYear === dataset.year
       chartDataset.mouseover = nextProps.hoverYear === dataset.year
-      chartDataset.thin = !chartDataset.visible
+      chartDataset.thin = !chartDataset.visible && !chartDataset.bogus
       return chartDataset
     })
 
@@ -106,7 +98,7 @@ export default class Chart extends React.Component {
     }
     var min;
     var max;
-    data.forEach(dataset => {
+    data.filter(dataset => !dataset.bogus).forEach(dataset => {
       if (!min || dataset[MIN].min < min) {
         min = dataset[MIN].min
       }
