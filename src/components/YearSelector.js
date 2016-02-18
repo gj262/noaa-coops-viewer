@@ -36,7 +36,7 @@ export default class YearSelector extends React.Component {
                 <input type='checkbox' checked={this.isChecked(yearData.year)} onChange={this.yearSelect.bind(this, yearData.year)} />
               </td>
               <td>
-                {yearData.year} {yearData.partial ? (<sup>p</sup>) : null}
+              {yearData.year} {yearData.partial ? (<sup>p</sup>) : null} {yearData.bogus ? (<sup>b</sup>) : null}
               </td>
               <td style={this.minValueStyle(yearData)}>
                 {yearData[MIN].min.toFixed(2)}

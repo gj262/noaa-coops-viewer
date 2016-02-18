@@ -204,6 +204,7 @@ export default createReducer(
         }
       );
       generateHeatIndices(data);
+      detectBogusYears(data);
       return Object.assign({}, state, {
         isFetching: false,
         data: data
@@ -338,6 +339,21 @@ function generateHeatIndices(data) {
       dataset[MAX].heatIndex = (dataset[MAX].max - maxRange[0]) / (maxRange[1] - maxRange[0]);
     }
   });
+}
+
+function detectBogusYears(data) {
+  // There should be a standard deviation for min/max values for a
+  // year. However some stations are whacked e.g. Port Chicago. If a
+  // year is wildly outside of that range then mark it as bogus.
+
+  var completeYears = data.filter(dataset => !dataset.partial);
+  var deviations = completeYears.map(dataset => dataset[MAX].max - dataset[MIN].min);
+  if (deviations.length >= 2) {
+    var avgDeviation = deviations.reduce((previous, current) => previous + current) / deviations.length;
+    completeYears.forEach(dataset => {
+      dataset.bogus = (dataset[MAX].max - dataset[MIN].min > avgDeviation * 2);
+    });
+  }
 }
 
 function compileWaterTempStations(stations) {
