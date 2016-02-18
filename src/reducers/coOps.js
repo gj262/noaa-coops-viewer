@@ -196,10 +196,14 @@ export default createReducer(
       var [min, max] = createDailyMinMaxGraphs(data);
       var partial = detectPartial(min, year);
       data = state.data.concat(
-        { year: year, bound: MIN, data: min, min: getOverallMin(min), partial: partial },
-        { year: year, bound: MAX, data: max, max: getOverallMax(max), partial: partial }
+        {
+          year: year,
+          partial: partial,
+          [MIN]: { data: min, min: getOverallMin(min) },
+          [MAX]: { data: max, max: getOverallMax(max) }
+        }
       );
-      data = generateHeatIndices(data);
+      generateHeatIndices(data);
       return Object.assign({}, state, {
         isFetching: false,
         data: data
@@ -312,34 +316,28 @@ function generateHeatIndices(data) {
   var minRange = [];
   var maxRange = [];
   data.filter(dataset => !dataset.partial).forEach(dataset => {
-    if (dataset.bound === MIN) {
-      if (minRange.length !== 2 || minRange[0] > dataset.min) {
-        minRange[0] = dataset.min;
-      }
-      if (minRange.length !== 2 || minRange[1] < dataset.min) {
-        minRange[1] = dataset.min;
-      }
+    if (minRange.length !== 2 || minRange[0] > dataset[MIN].min) {
+      minRange[0] = dataset[MIN].min;
     }
-    if (dataset.bound === MAX) {
-      if (maxRange.length !== 2 || maxRange[0] > dataset.max) {
-        maxRange[0] = dataset.max;
-      }
-      if (maxRange.length !== 2 || maxRange[1] < dataset.max) {
-        maxRange[1] = dataset.max;
-      }
+    if (minRange.length !== 2 || minRange[1] < dataset[MIN].min) {
+      minRange[1] = dataset[MIN].min;
+    }
+    if (maxRange.length !== 2 || maxRange[0] > dataset[MAX].max) {
+      maxRange[0] = dataset[MAX].max;
+    }
+    if (maxRange.length !== 2 || maxRange[1] < dataset[MAX].max) {
+      maxRange[1] = dataset[MAX].max;
     }
   });
 
   data.filter(dataset => !dataset.partial).forEach(dataset => {
-    if (dataset.bound === MIN && minRange.length === 2 && minRange[0] !== minRange[1]) {
-      dataset.heatIndex = (dataset.min - minRange[0]) / (minRange[1] - minRange[0]);
+    if (minRange.length === 2 && minRange[0] !== minRange[1]) {
+      dataset[MIN].heatIndex = (dataset[MIN].min - minRange[0]) / (minRange[1] - minRange[0]);
     }
-    if (dataset.bound === MAX && maxRange.length === 2 && maxRange[0] !== maxRange[1]) {
-      dataset.heatIndex = (dataset.max - maxRange[0]) / (maxRange[1] - maxRange[0]);
+    if (maxRange.length === 2 && maxRange[0] !== maxRange[1]) {
+      dataset[MAX].heatIndex = (dataset[MAX].max - maxRange[0]) / (maxRange[1] - maxRange[0]);
     }
   });
-
-  return data;
 }
 
 function compileWaterTempStations(stations) {

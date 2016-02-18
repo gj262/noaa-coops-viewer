@@ -15,23 +15,6 @@ export default class YearSelector extends React.Component {
   };
 
   render () {
-    var years = {}
-    this.props.data.forEach(dataset => {
-      // Combine dual min/max graphs into a single data set per year
-      if (!(dataset.year in years)) {
-        years[dataset.year] = { ...dataset }
-      }
-      if (dataset.bound === MIN) {
-        years[dataset.year].min = dataset.min
-        years[dataset.year].minHeatIndex = dataset.heatIndex
-      }
-      else if (dataset.bound === MAX) {
-        years[dataset.year].max = dataset.max
-        years[dataset.year].maxHeatIndex = dataset.heatIndex
-      }
-    })
-
-    var orderedYears = Object.keys(years).sort((a, b) => b - a).map(year => years[year]);
     return (
       <div>
         <table className='table table-condensed table-hover years'>
@@ -44,7 +27,7 @@ export default class YearSelector extends React.Component {
             </tr>
           </thead>
           <tbody>
-          {orderedYears.map(yearData => (
+          {this.props.data.map(yearData => (
             <tr
               key={yearData.year}
               onMouseOver={this.onMouseOverYear.bind(this, yearData)}
@@ -56,10 +39,10 @@ export default class YearSelector extends React.Component {
                 {yearData.year} {yearData.partial ? (<sup>p</sup>) : null}
               </td>
               <td style={this.minValueStyle(yearData)}>
-                {yearData.min.toFixed(2)}
+                {yearData[MIN].min.toFixed(2)}
               </td>
               <td style={this.maxValueStyle(yearData)}>
-                {yearData.max.toFixed(2)}
+                {yearData[MAX].max.toFixed(2)}
               </td>
             </tr>
           ))}
@@ -95,7 +78,7 @@ export default class YearSelector extends React.Component {
     if (yearData.partial) {
       return {};
     }
-    var index = Math.floor(4 * yearData.minHeatIndex);
+    var index = Math.floor(4 * yearData[MIN].heatIndex);
     return {
       background: ['rgb(60,160,240)', 'rgb(80,180,250)', 'rgb(130,210,255)', 'rgb(160,240,255)', 'rgb(200,250,255)'][index]
     };
@@ -105,7 +88,7 @@ export default class YearSelector extends React.Component {
     if (yearData.partial) {
       return {};
     }
-    var index = Math.floor(4 * yearData.maxHeatIndex);
+    var index = Math.floor(4 * yearData[MAX].heatIndex);
     return {
       background: ['rgb(255,232,120)', 'rgb(255,192,60)', 'rgb(255,160,0)', 'rgb(255,96,0)', 'rgb(255,50,0)'][index]
     };

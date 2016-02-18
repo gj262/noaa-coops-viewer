@@ -68,8 +68,7 @@ export default class Chart extends React.Component {
           ? null
           : this.state.chartData.find(
             chartDataset =>
-              chartDataset.year === dataset.year &&
-              chartDataset.bound === dataset.bound
+              chartDataset.year === dataset.year
           );
       if (!chartDataset) {
         chartDataset = Object.assign({}, dataset)
@@ -108,11 +107,11 @@ export default class Chart extends React.Component {
     var min;
     var max;
     data.forEach(dataset => {
-      if (dataset.bound === MIN && (!min || dataset.min < min)) {
-        min = dataset.min
+      if (!min || dataset[MIN].min < min) {
+        min = dataset[MIN].min
       }
-      if (dataset.bound === MAX && (!max || dataset.max > max)) {
-        max = dataset.max
+      if (!max || dataset[MAX].max > max) {
+        max = dataset[MAX].max
       }
     })
     var ticks = [];
@@ -156,7 +155,8 @@ export default class Chart extends React.Component {
         }}>
         {this.renderYAxis()}
         {this.renderXAxis()}
-        {this.state.chartData.map(dataset => this.renderLine(dataset))}
+        {this.state.chartData.map(dataset => this.renderLine(dataset, MIN))}
+        {this.state.chartData.map(dataset => this.renderLine(dataset, MAX))}
       </VictoryChart>
     )
   }
@@ -183,10 +183,10 @@ export default class Chart extends React.Component {
     )
   }
 
-  renderLine(dataset) {
+  renderLine(dataset, bound) {
     var instanceKey = this.props.selectedStationID +
         dataset.year +
-        dataset.bound +
+        bound +
         this.state.yTicks[0] +
         this.state.yTicks[this.state.yTicks.length - 1]
     return (
@@ -195,8 +195,8 @@ export default class Chart extends React.Component {
          updateAttrs={`${dataset.visible} ${dataset.thin} ${dataset.mouseover} ${this.state.yTicks[0]} ${this.state.yTicks[this.state.yTicks.length - 1]}`}
          range={[this.state.yTicks[0], this.state.yTicks[this.state.yTicks.length - 1]]}
          interpolation='natural'
-         label={dataset.visible && dataset.bound === MIN ? `${dataset.year}` : ''}
-         data={dataset.data}
+         label={dataset.visible && bound === MIN ? `${dataset.year}` : ''}
+         data={dataset[bound].data}
          style={{
            data: this.getLineStyle(dataset),
            label: {color: dataset.color}
