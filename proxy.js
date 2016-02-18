@@ -10,8 +10,9 @@ function USAGE(arg) {
   /*eslint no-multi-str: 0*/
   console.log('USAGE: ./proxy.js\n\
 \t--proxy=<remote api                [default: http://tidesandcurrents.noaa.gov]>\n\
-\t--dir=<local dir for static assets [default: dist]>\n\
+\t--dir=<dir for static assets       [default: dist]>\n\
 \t--port=<local port to listen on    [default: 9090]>\n\
+\t--cache=<dir to save api responses [default: noaa-cache]>\n\
 ');
   process.exit();
 }
@@ -19,7 +20,8 @@ function USAGE(arg) {
 var options = {
   proxy: process.env.HOST  || 'http://tidesandcurrents.noaa.gov',
   dir:   process.env.DIR   || 'dist',
-  port:  process.env.PORT  || 9090
+  port:  process.env.PORT  || 9090,
+  cache: process.env.CACHE || 'noaa-cache'
 };
 
 var grokOption = function (option) {
@@ -47,20 +49,32 @@ while (arg) {
 var express = require('express');
 var app = express();
 var proxy = require('express-http-proxy');
+var fs = require('fs');
+var path = require('path');
+var temp = require('temp');
+var sanitize = require('sanitize-filename');
+var Moment = require('moment');
 
 // Allow connections to self signed certs
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-var cache = {};
+try {
+  var cache = fs.statSync(options.cache);
+}
+catch (e) {
+  if (e.code === 'ENOENT') {
+    fs.mkdir(options.cache)
+  }
+}
+if (cache && !cache.isDirectory()) {
+  throw new Error(`The cache directory (${options.cache}) exists but is not a directory`)
+}
 
 app.all('/api/*', function(req, res, next) {
   console.log('Got an API call')
-  if (req.originalUrl in cache) {
+  if (isInCache(req.originalUrl)) {
     console.log('Using cached data for ' + req.originalUrl)
-    var hit = cache[req.originalUrl]
-    res.set('Content-Type', hit['Content-Type'])
-    res.set('Content-Encoding', hit['Content-Encoding'])
-    res.send(hit.data)
+    respondWithCachedData(req.originalUrl, res)
   }
   else {
     next()
@@ -73,17 +87,62 @@ app.use(/\/api/, proxy(options.proxy, {
     return req.originalUrl;
   },
   intercept: function(rsp, data, req, res, callback) {
-    if (!(req.originalUrl in cache)) {
+    if (!isInCache(req.originalUrl) && shouldCache(req.originalUrl)) {
       console.log('Caching ' + req.originalUrl)
-      cache[req.originalUrl] = {
-        data: data,
-        'Content-Type': 'text/json',
-        'Content-Encoding': res.get('Content-Encoding')
-      }
+      addToCache(req.originalUrl, data, res)
     }
     callback(null, data)
+  },
+  decorateRequest: function(req) {
+    // For caching we require gzip
+    req.headers['Accept-Encoding'] = 'gzip';
+    return req;
   }
 }));
+
+function cachePath(url) {
+  return path.join(options.cache, sanitize(url, '_'))
+}
+
+function isInCache(url) {
+  var cachepath = cachePath(url)
+  try {
+    fs.statSync(cachepath);
+  }
+  catch (e) {
+    if (e.code === 'ENOENT') {
+      return false;
+    }
+    throw e
+  }
+  return true;
+}
+
+function shouldCache(url) {
+  // Don't cache the current year
+  // Look a day behind and ahead to avoid time difference issues with browser and proxy
+  var yesterdayYear = Moment().subtract(1, 'd').year();
+  var tomorrowYear = Moment().add(1, 'd').year();
+  console.log(`Excluding years ${yesterdayYear} and ${tomorrowYear} from cache`);
+  if (url.indexOf(`begin_date=${yesterdayYear}`) !== -1 || url.indexOf(`begin_date=${tomorrowYear}`) !== -1) {
+    console.log(`Not caching ${url}`);
+    return false;
+  }
+  return true;
+}
+
+function addToCache(url, data) {
+  var tmppath = temp.path({dir: options.cache, suffix: '.tmp'});
+  fs.writeFileSync(tmppath, data)
+  fs.rename(tmppath, cachePath(url))
+}
+
+function respondWithCachedData(url, res) {
+  var data = fs.readFileSync(cachePath(url));
+  res.set('Content-Type', 'text/json');
+  res.set('Content-Encoding', 'gzip');
+  res.send(data);
+}
 
 app.use(express.static(__dirname + '/' + options.dir));
 
