@@ -203,8 +203,8 @@ export default createReducer(
           [MAX]: { data: max, max: getOverallMax(max) }
         }
       );
-      generateHeatIndices(data);
       detectBogusYears(data);
+      generateHeatIndices(data);
       return Object.assign({}, state, {
         isFetching: false,
         data: data
@@ -316,7 +316,8 @@ function detectPartial(data, year) {
 function generateHeatIndices(data) {
   var minRange = [];
   var maxRange = [];
-  data.filter(dataset => !dataset.partial).forEach(dataset => {
+  var completeNonBogusYears = data.filter(dataset => !dataset.partial && !dataset.bogus);
+  completeNonBogusYears.forEach(dataset => {
     if (minRange.length !== 2 || minRange[0] > dataset[MIN].min) {
       minRange[0] = dataset[MIN].min;
     }
@@ -331,7 +332,7 @@ function generateHeatIndices(data) {
     }
   });
 
-  data.filter(dataset => !dataset.partial).forEach(dataset => {
+  completeNonBogusYears.forEach(dataset => {
     if (minRange.length === 2 && minRange[0] !== minRange[1]) {
       dataset[MIN].heatIndex = (dataset[MIN].min - minRange[0]) / (minRange[1] - minRange[0]);
     }
@@ -340,6 +341,8 @@ function generateHeatIndices(data) {
     }
   });
 }
+
+const BOGUS_DEVIATION_FACTOR = 1.5;
 
 function detectBogusYears(data) {
   // There should be a standard deviation for min/max values for a
@@ -351,7 +354,7 @@ function detectBogusYears(data) {
   if (deviations.length >= 2) {
     var avgDeviation = deviations.reduce((previous, current) => previous + current) / deviations.length;
     completeYears.forEach(dataset => {
-      dataset.bogus = (dataset[MAX].max - dataset[MIN].min > avgDeviation * 2);
+      dataset.bogus = (dataset[MAX].max - dataset[MIN].min > avgDeviation * BOGUS_DEVIATION_FACTOR);
     });
   }
 }
