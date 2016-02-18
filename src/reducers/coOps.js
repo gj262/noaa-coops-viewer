@@ -332,6 +332,11 @@ function generateHeatIndices(data) {
     }
   });
 
+  data.forEach(dataset => {
+    delete dataset[MIN].heatIndex;
+    delete dataset[MAX].heatIndex;
+  });
+
   completeNonBogusYears.forEach(dataset => {
     if (minRange.length === 2 && minRange[0] !== minRange[1]) {
       dataset[MIN].heatIndex = (dataset[MIN].min - minRange[0]) / (minRange[1] - minRange[0]);
@@ -342,21 +347,20 @@ function generateHeatIndices(data) {
   });
 }
 
-const BOGUS_DEVIATION_FACTOR = 1.5;
+const BOGUS_DEVIATION_FACTOR = 1.375;
 
 function detectBogusYears(data) {
   // There should be a standard deviation for min/max values for a
   // year. However some stations are whacked e.g. Port Chicago. If a
   // year is wildly outside of that range then mark it as bogus.
-
-  var completeYears = data.filter(dataset => !dataset.partial);
-  var deviations = completeYears.map(dataset => dataset[MAX].max - dataset[MIN].min);
-  if (deviations.length >= 2) {
-    var avgDeviation = deviations.reduce((previous, current) => previous + current) / deviations.length;
-    data.forEach(dataset => {
+  data.forEach(dataset => {
+    var completeNonBogusYears = data.filter(dataset => !dataset.partial && !dataset.bogus);
+    var deviations = completeNonBogusYears.map(dataset => dataset[MAX].max - dataset[MIN].min);
+    if (deviations.length >= 2) {
+      var avgDeviation = deviations.reduce((previous, current) => previous + current) / deviations.length;
       dataset.bogus = (dataset[MAX].max - dataset[MIN].min > avgDeviation * BOGUS_DEVIATION_FACTOR);
-    });
-  }
+    }
+  });
 }
 
 function compileWaterTempStations(stations) {
