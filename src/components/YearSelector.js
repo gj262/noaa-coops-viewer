@@ -49,7 +49,7 @@ export default class YearSelector extends React.Component {
           </tbody>
         </table>
         <span><sup>p</sup> only partial data is available for these years.</span>
-        <span><sup>b</sup> these years have wildly different data from the norm.</span>
+        <span><sup>b</sup> these years have wildly different data from the norm and are not displayed unless selected.</span>
       </div>
     )
   }
