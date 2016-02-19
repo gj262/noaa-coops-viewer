@@ -9,6 +9,7 @@ import { routeActions, UPDATE_LOCATION } from 'redux-simple-router'
 const FETCHING_DATA = 'FETCHING_DATA'
 const DATA_FETCHED = 'DATA_FETCHED'
 const FETCH_ERROR = 'FETCH_ERROR'
+const FETCH_COMPLETE = 'FETCH_COMPLETE'
 const SET_HOVER_YEAR = 'SET_HOVER_YEAR'
 const CLEAR_HOVER_YEAR = 'CLEAR_HOVER_YEAR'
 
@@ -17,6 +18,7 @@ const CLEAR_HOVER_YEAR = 'CLEAR_HOVER_YEAR'
 const fetchingData = () => ({ type: FETCHING_DATA })
 const dataFetched = (year, data) => ({ type: DATA_FETCHED, payload: [year, data] })
 const fetchError = (year, message) => ({ type: FETCH_ERROR, payload: [year, message] })
+const fetchComplete = () => ({ type: FETCH_COMPLETE })
 const setHoverYear = (year) => ({ type: SET_HOVER_YEAR, payload: [year] })
 const clearHoverYear = () => ({ type: CLEAR_HOVER_YEAR })
 
@@ -70,6 +72,7 @@ function prefetchFromYear(year, dispatch, getState) {
           var [, message] = error.payload
           if (message.indexOf('No data was found') !== -1) {
             // year.year() + ' is the earliest'
+            dispatch(fetchComplete())
           }
           else {
             // other kind of error
@@ -221,6 +224,9 @@ export default createReducer(
         }),
         years: state.years.filter(keep => keep !== year)
       })
+    },
+    [FETCH_COMPLETE]: (state) => {
+      return Object.assign({}, state, { isFetching: false })
     },
     [UPDATE_LOCATION]: (state, location) => {
       if (!location || !location.query) {

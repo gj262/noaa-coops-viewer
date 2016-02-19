@@ -8,6 +8,7 @@ const debug = window.debug('components/year-selector');
 export default class YearSelector extends React.Component {
   static propTypes = {
     data: React.PropTypes.array.isRequired,
+    isFetching: React.PropTypes.bool.isRequired,
     selection: React.PropTypes.array.isRequired,
     toggleYearSelection: React.PropTypes.func.isRequired,
     setHoverYear: React.PropTypes.func.isRequired,
@@ -46,12 +47,30 @@ export default class YearSelector extends React.Component {
               </td>
             </tr>
           ))}
+          {this.renderFetching()}
           </tbody>
         </table>
         <span><sup>p</sup> only partial data is available for these years.</span>
         <span><sup>b</sup> these years have wildly different data from the norm.</span>
       </div>
     )
+  }
+
+  renderFetching() {
+    if (!this.props.isFetching) {
+      return null
+    }
+    return (
+      <tr>
+      <td>
+      </td>
+      <td>
+      </td>
+      <td colSpan={2}>
+      Loading...
+      </td>
+      </tr>
+    );
   }
 
   isChecked(year) {
