@@ -1,5 +1,7 @@
 import React from 'react'
+import Select from 'react-select';
 
+import 'react-select/scss/default.scss'
 import './StationSelector.scss'
 
 export default class StationSelector extends React.Component {
@@ -10,26 +12,23 @@ export default class StationSelector extends React.Component {
   };
 
   render () {
+    var options = this.makeStationOptions();
     return (
-      <div>
-        <select
-          ref='selection'
+      <div className='text-left col-xs-offset-3 col-xs-6 col-lg-offset-4 col-lg-4 '>
+        <Select
           value={this.props.selectedStationID}
-          onChange={this.selectStationID.bind(this)}
-          className='form-control stations'>
-            {this.props.stations.map(station => (
-              <option
-                value={station.ID}
-                key={station.ID}>
-                  {station.name} {station.state} ({station.ID})
-              </option>
-            ))}
-        </select>
+          clearable={false}
+          options={options}
+          onChange={this.selectStationID.bind(this)} />
       </div>
     )
   }
 
-  selectStationID() {
-    this.props.selectStationID(this.refs.selection.value)
+  makeStationOptions() {
+    return this.props.stations.map(station => { return {value: station.ID, label: `${station.name} ${station.state} (${station.ID})`} })
+  }
+
+  selectStationID(stationID) {
+    this.props.selectStationID(stationID)
   }
 }
