@@ -1,24 +1,27 @@
-import 'babel-polyfill'
 import React from 'react'
 import ReactDOM from 'react-dom'
-import routes from './routes'
-import Root from './containers/Root'
-import { browserHistory } from 'react-router'
-import { syncHistory, routeReducer } from 'redux-simple-router'
+import { connectRouter, routerMiddleware } from 'connected-react-router'
 import thunkMiddleware from 'redux-thunk'
+import { createBrowserHistory } from 'history'
+import { applyMiddleware, compose, createStore, combineReducers } from 'redux'
+import 'utils/logging'
+import routes from './routes'
 import reducers from './reducers'
-import { applyMiddleware, createStore, combineReducers } from 'redux'
+import Root from './containers/Root'
 
-const reducer = combineReducers(Object.assign({}, reducers, {
-  routing: routeReducer
-}))
+const createRootReducer = history =>
+  combineReducers({ ...reducers, router: connectRouter(history) })
 
-const reduxRouterMiddleware = syncHistory(browserHistory)
-const createStoreWithMiddleware = applyMiddleware(reduxRouterMiddleware, thunkMiddleware)(createStore)
-const store = createStoreWithMiddleware(reducer)
+const history = createBrowserHistory()
+
+const store = createStore(
+  createRootReducer(history),
+  {},
+  compose(applyMiddleware(routerMiddleware(history), thunkMiddleware))
+)
 
 // Render the React application to the DOM
 ReactDOM.render(
-  <Root history={browserHistory} routes={routes} store={store} />,
+  <Root history={history} routes={routes} store={store} />,
   document.getElementById('root')
 )

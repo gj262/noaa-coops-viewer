@@ -1,56 +1,37 @@
-import webpack from 'webpack';
+import webpack from 'webpack'
 import { argv } from 'yargs'
+import path from 'path'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
-import ExtractTextPlugin from 'extract-text-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 
 const globals = {
-  'process.env'  : {
-    'NODE_ENV' : JSON.stringify(process.env.NODE_ENV)
+  'process.env': {
+    NODE_ENV: JSON.stringify(process.env.NODE_ENV)
   },
-  'NODE_ENV'     : process.env.NODE_ENV,
-  '__DEV__'      : process.env.NODE_ENV === 'development',
-  '__PROD__'     : process.env.NODE_ENV === 'production',
-  '__DEBUG__'    : process.env.NODE_ENV === 'development' && !argv.no_debug
-};
+  NODE_ENV: process.env.NODE_ENV,
+  __DEV__: process.env.NODE_ENV === 'development',
+  __PROD__: process.env.NODE_ENV === 'production',
+  __DEBUG__: process.env.NODE_ENV === 'development' && !argv.no_debug
+}
 
-const path_base = __dirname;
+const basePath = __dirname
 
 const webpackConfig = {
+  mode: process.env.NODE_ENV,
   name: 'compare',
   target: 'web',
   devtool: 'inline-source-map',
   entry: {
-    app: [
-      path_base + '/src/app.js'
-    ],
-    logging: [
-      path_base + '/src/utils/logging.js'
-    ],
-    vendor: [
-      'd3-scale',
-      'd3-time-format',
-      'moment',
-      'react',
-      'react-redux',
-      'react-router',
-      'redux',
-      'redux-simple-router'
-    ]
+    app: './src/app.js'
   },
   output: {
     filename: `[name].js`,
-    path: 'dist/',
-    publicPath: '/'
+    path: path.join(__dirname, 'dist')
   },
   plugins: [
     new webpack.DefinePlugin(globals),
-    new webpack.optimize.OccurrenceOrderPlugin(),
-    new webpack.optimize.DedupePlugin(),
-    new webpack.optimize.CommonsChunkPlugin({
-      names: ['vendor']
-    }),
     new HtmlWebpackPlugin({
-      template: path_base + '/src/index.html',
+      template: basePath + '/src/index.html',
       hash: false,
       filename: 'index.html',
       inject: 'body',
@@ -58,43 +39,37 @@ const webpackConfig = {
         collapseWhitespace: true
       }
     }),
-    new ExtractTextPlugin(`[name].css`)
+    new MiniCssExtractPlugin(`[name].css`)
   ],
   resolve: {
-    root: path_base + '/src',
-    extensions: ['', '.js', '.jsx']
+    modules: [path.join(__dirname, 'src'), 'node_modules'],
+    extensions: ['.js', '.jsx']
   },
   module: {
-    preLoaders: [
+    rules: [
       {
-        test: /\.js$/,
-        loader: 'eslint-loader',
-        exclude: /node_modules/
-      }
-    ],
-    loaders: [
+        test: /\.jsx?$/,
+        enforce: 'pre',
+        use: 'eslint-loader'
+      },
       {
         test: /\.jsx?$/,
         exclude: /node_modules/,
-        loader: 'babel',
-        query: {
-          cacheDirectory: true,
-          plugins: ['transform-runtime'],
-          presets: ['es2015', 'react', 'stage-0']
-        }
+        use: 'babel-loader'
       },
       {
         test: /\.scss$/,
-        loader: ExtractTextPlugin.extract(
-          'style-loader',
-          'css-loader?sourceMap!postcss-loader!sass-loader'
-        )
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: {}
+          },
+          'css-loader',
+          'sass-loader'
+        ]
       }
     ]
-  },
-  sassLoader: {
-    includePaths: path_base + '/src/styles'
   }
-};
+}
 
 export default webpackConfig

@@ -1,10 +1,15 @@
 import React from 'react'
-import { Route, IndexRoute } from 'react-router'
+import { Route } from 'react-router-dom'
 import CoreLayout from 'layouts/CoreLayout'
 import HomeView from 'views/HomeView'
 
 export default (
-  <Route component={CoreLayout} path='/'>
-    <IndexRoute component={HomeView} />
-  </Route>
+  <Route
+    path='/'
+    render={props => (
+      <CoreLayout {...props}>
+        <HomeView {...props} />
+      </CoreLayout>
+    )}
+  />
 )

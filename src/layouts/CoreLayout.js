@@ -1,35 +1,36 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import 'styles/core.scss'
 
 export default class CoreLayout extends React.Component {
   static propTypes = {
-    children: React.PropTypes.element
-  };
+    children: PropTypes.element
+  }
 
-  constructor() {
-    super();
+  constructor () {
+    super()
     this.state = {
       ...this.getPageSize()
     }
   }
 
-  componentDidMount() {
+  componentDidMount () {
     this.handleResize = this.handleResize.bind(this)
-    window.addEventListener('resize', this.handleResize);
+    window.addEventListener('resize', this.handleResize)
   }
 
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.handleResize);
+  componentWillUnmount () {
+    window.removeEventListener('resize', this.handleResize)
   }
 
-  handleResize(e) {
-    e.preventDefault();
-    this.setState(this.getPageSize());
+  handleResize (e) {
+    e.preventDefault()
+    this.setState(this.getPageSize())
   }
 
-  getPageSize() {
-    var width = document.documentElement.clientWidth;
-    var height = document.documentElement.clientHeight;
+  getPageSize () {
+    var width = document.documentElement.clientWidth
+    var height = document.documentElement.clientHeight
     return {
       pageWidth: width,
       pageHeight: height
@@ -37,14 +38,15 @@ export default class CoreLayout extends React.Component {
   }
 
   render () {
-    var childrenWithPageSize = React.Children.map(this.props.children, (child) => {
-      return React.cloneElement(child, { ...this.state });
-    });
+    var childrenWithPageSize = React.Children.map(
+      this.props.children,
+      child => {
+        return React.cloneElement(child, { ...this.state })
+      }
+    )
     return (
       <div className='page-container'>
-        <div className='view-container'>
-          {childrenWithPageSize}
-        </div>
+        <div className='view-container'>{childrenWithPageSize}</div>
       </div>
     )
   }

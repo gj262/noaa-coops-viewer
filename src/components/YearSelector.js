@@ -1,19 +1,20 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import { MIN, MAX } from 'reducers/coOps'
 
 import './YearSelector.scss'
 
-const debug = window.debug('components/year-selector');
+const debug = window.debug('components/year-selector')
 
 export default class YearSelector extends React.Component {
   static propTypes = {
-    data: React.PropTypes.array.isRequired,
-    isFetching: React.PropTypes.bool.isRequired,
-    selection: React.PropTypes.array.isRequired,
-    toggleYearSelection: React.PropTypes.func.isRequired,
-    setHoverYear: React.PropTypes.func.isRequired,
-    clearHoverYear: React.PropTypes.func.isRequired
-  };
+    data: PropTypes.array.isRequired,
+    isFetching: PropTypes.bool.isRequired,
+    selection: PropTypes.array.isRequired,
+    toggleYearSelection: PropTypes.func.isRequired,
+    setHoverYear: PropTypes.func.isRequired,
+    clearHoverYear: PropTypes.func.isRequired
+  }
 
   render () {
     return (
@@ -21,72 +22,78 @@ export default class YearSelector extends React.Component {
         <table className='table table-condensed table-hover years'>
           <thead>
             <tr>
-              <th></th>
-              <th></th>
+              <th />
+              <th />
               <th>Min</th>
               <th>Max</th>
             </tr>
           </thead>
           <tbody>
-          {this.props.data.map(yearData => (
-            <tr
-              key={yearData.year}
-              onMouseOver={this.onMouseOverYear.bind(this, yearData)}
-              onMouseOut={this.onMouseOutYear.bind(this, yearData)}>
-              <td>
-                <input type='checkbox' checked={this.isChecked(yearData.year)} onChange={this.yearSelect.bind(this, yearData.year)} />
-              </td>
-              <td>
-              {yearData.year} {yearData.partial ? (<sup>p</sup>) : null} {yearData.bogus ? (<sup>b</sup>) : null}
-              </td>
-              <td style={this.minValueStyle(yearData)}>
-                {yearData[MIN].min.toFixed(2)}
-              </td>
-              <td style={this.maxValueStyle(yearData)}>
-                {yearData[MAX].max.toFixed(2)}
-              </td>
-            </tr>
-          ))}
-          {this.renderFetching()}
+            {this.props.data.map(yearData => (
+              <tr
+                key={yearData.year}
+                onMouseOver={() => this.onMouseOverYear(yearData)}
+                onMouseOut={() => this.onMouseOutYear(yearData)}
+              >
+                <td>
+                  <input
+                    type='checkbox'
+                    checked={this.isChecked(yearData.year)}
+                    onChange={() => this.yearSelect(yearData.year)}
+                  />
+                </td>
+                <td>
+                  {yearData.year} {yearData.partial ? <sup>p</sup> : null}{' '}
+                  {yearData.bogus ? <sup>b</sup> : null}
+                </td>
+                <td style={this.minValueStyle(yearData)}>
+                  {yearData[MIN].min.toFixed(2)}
+                </td>
+                <td style={this.maxValueStyle(yearData)}>
+                  {yearData[MAX].max.toFixed(2)}
+                </td>
+              </tr>
+            ))}
+            {this.renderFetching()}
           </tbody>
         </table>
-        <span><sup>p</sup> only partial data is available for these years.</span>
-        <span><sup>b</sup> these years have wildly different data from the norm.</span>
+        <span>
+          <sup>p</sup> only partial data is available for these years.
+        </span>
+        <span>
+          <sup>b</sup> these years have wildly different data from the norm.
+        </span>
       </div>
     )
   }
 
-  renderFetching() {
+  renderFetching () {
     if (!this.props.isFetching) {
       return null
     }
     return (
       <tr>
-      <td>
-      </td>
-      <td>
-      </td>
-      <td colSpan={2}>
-      Loading...
-      </td>
+        <td />
+        <td />
+        <td colSpan={2}>Loading...</td>
       </tr>
-    );
+    )
   }
 
-  isChecked(year) {
+  isChecked (year) {
     return this.props.selection.indexOf(year) !== -1
   }
 
-  yearSelect(year) {
+  yearSelect = year => {
     this.props.toggleYearSelection(year)
   }
 
-  onMouseOverYear(yearData) {
+  onMouseOverYear = yearData => {
     debug(`mouseover ${yearData.year}`)
     this.props.setHoverYear(yearData.year)
   }
 
-  onMouseOutYear(yearData) {
+  onMouseOutYear = yearData => {
     debug(`mouseout ${yearData.year}`)
     this.props.clearHoverYear()
   }
@@ -94,23 +101,35 @@ export default class YearSelector extends React.Component {
   // Dave Thompson's palette
   // http://research.jisao.washington.edu/wallace/palette.gif
 
-  minValueStyle(yearData) {
+  minValueStyle (yearData) {
     if (yearData.partial) {
-      return {};
+      return {}
     }
-    var index = Math.floor(4 * yearData[MIN].heatIndex);
+    var index = Math.floor(4 * yearData[MIN].heatIndex)
     return {
-      background: ['rgb(60,160,240)', 'rgb(80,180,250)', 'rgb(130,210,255)', 'rgb(160,240,255)', 'rgb(200,250,255)'][index]
-    };
+      background: [
+        'rgb(60,160,240)',
+        'rgb(80,180,250)',
+        'rgb(130,210,255)',
+        'rgb(160,240,255)',
+        'rgb(200,250,255)'
+      ][index]
+    }
   }
 
-  maxValueStyle(yearData) {
+  maxValueStyle (yearData) {
     if (yearData.partial) {
-      return {};
+      return {}
     }
-    var index = Math.floor(4 * yearData[MAX].heatIndex);
+    var index = Math.floor(4 * yearData[MAX].heatIndex)
     return {
-      background: ['rgb(255,232,120)', 'rgb(255,192,60)', 'rgb(255,160,0)', 'rgb(255,96,0)', 'rgb(255,50,0)'][index]
-    };
+      background: [
+        'rgb(255,232,120)',
+        'rgb(255,192,60)',
+        'rgb(255,160,0)',
+        'rgb(255,96,0)',
+        'rgb(255,50,0)'
+      ][index]
+    }
   }
 }

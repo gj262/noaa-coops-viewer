@@ -1,26 +1,26 @@
 // Only update victory chart elements when key attributes change.
 
+import PropTypes from 'prop-types'
+
 import React from 'react'
 import { VictoryLine } from 'victory'
 
 class StaticVictoryLine extends React.Component {
   static propTypes = {
-    data: React.PropTypes.array.isRequired,
-    updateAttrs: React.PropTypes.string.isRequired
-  };
-
-  shouldComponentUpdate(nextProps) {
-    return this.props.data !== nextProps.data ||
-           this.props.updateAttrs !== nextProps.updateAttrs
+    data: PropTypes.array.isRequired,
+    updateAttrs: PropTypes.string.isRequired
   }
 
-  render() {
+  shouldComponentUpdate (nextProps) {
     return (
-      <VictoryLine {...this.props} />
+      this.props.data !== nextProps.data ||
+      this.props.updateAttrs !== nextProps.updateAttrs
     )
   }
+
+  render () {
+    return <VictoryLine {...this.props} />
+  }
 }
 
-export {
-  StaticVictoryLine
-}
+export { StaticVictoryLine }

@@ -1,20 +1,21 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import { Provider } from 'react-redux'
-import { Router } from 'react-router'
+import { ConnectedRouter } from 'connected-react-router'
 
 export default class Root extends React.Component {
   static propTypes = {
-    history: React.PropTypes.object.isRequired,
-    routes: React.PropTypes.element.isRequired,
-    store: React.PropTypes.object.isRequired
-  };
+    routes: PropTypes.element.isRequired,
+    store: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired
+  }
 
   render () {
     return (
       <Provider store={this.props.store}>
-        <Router history={this.props.history}>
+        <ConnectedRouter history={this.props.history}>
           {this.props.routes}
-        </Router>
+        </ConnectedRouter>
       </Provider>
     )
   }
