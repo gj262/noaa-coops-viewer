@@ -10,7 +10,7 @@ import reducers from './reducers'
 import Root from './containers/Root'
 
 const createRootReducer = history =>
-  combineReducers({ ...reducers, router: connectRouter(history) })
+  combineReducers({ router: connectRouter(history), ...reducers })
 
 const history = createBrowserHistory()
 

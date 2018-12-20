@@ -1,8 +1,12 @@
 import createReducer from 'utils/createReducer'
 import fetch from 'isomorphic-fetch'
 import Moment from 'moment'
+import queryString from 'query-string'
 import stations from './stations'
-import { push as routerActionPush, LOCATION_CHANGE } from 'connected-react-router'
+import {
+  push as routerActionPush,
+  LOCATION_CHANGE
+} from 'connected-react-router'
 
 // Dispatch Action Types
 
@@ -46,9 +50,9 @@ const toggleYearSelection = year => {
       years = years.filter(keep => keep !== year)
     }
     dispatch(
-      routerActionPush({
-        query: makeQuery(getState().coOps, { years: years.join(' ') })
-      })
+      routerActionPush(
+        makeLocation(getState().coOps, { years: years.join(' ') })
+      )
     )
   }
 }
@@ -56,9 +60,7 @@ const toggleYearSelection = year => {
 const selectStationID = stationID => {
   return (dispatch, getState) => {
     dispatch(
-      routerActionPush({
-        query: makeQuery(getState().coOps, { stn: stationID })
-      })
+      routerActionPush(makeLocation(getState().coOps, { stn: stationID }))
     )
   }
 }
@@ -172,15 +174,13 @@ function dropAnomalousValues (data) {
   })
 }
 
-function makeQuery (state, change) {
-  return Object.assign(
-    {},
-    {
-      stn: state.selectedStationID,
-      years: state.years.join(' ')
-    },
-    change
-  )
+function makeLocation (state, change) {
+  const query = {
+    stn: state.selectedStationID,
+    years: state.years.join(' '),
+    ...change
+  }
+  return { search: queryString.stringify(query) }
 }
 
 // Bounds
@@ -244,25 +244,26 @@ export default createReducer(
       return Object.assign({}, state, { isFetching: false })
     },
     [LOCATION_CHANGE]: (state, { location }) => {
-      if (!location || !location.query) {
+      if (!location || !location.search) {
         return state
       }
+      const query = queryString.parse(location.search)
       if (
-        location.query.years &&
-        location.query.years !== state.years.join(' ')
+        query.years &&
+        query.years !== state.years.join(' ')
       ) {
-        var years = location.query.years
+        var years = query.years
           .split(/ /)
           .map(year => parseInt(year, 10))
         state = Object.assign({}, state, { years: years })
       }
       if (
-        location.query.stn &&
-        location.query.stn !== state.selectedStationID
+        query.stn &&
+        query.stn !== state.selectedStationID
       ) {
         state = Object.assign({}, state, {
           data: [],
-          selectedStationID: location.query.stn
+          selectedStationID: query.stn
         })
       }
       return state
