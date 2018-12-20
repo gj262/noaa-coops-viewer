@@ -2,7 +2,7 @@ import createReducer from 'utils/createReducer'
 import fetch from 'isomorphic-fetch'
 import Moment from 'moment'
 import stations from './stations'
-import { routeActions, UPDATE_LOCATION } from 'redux-simple-router'
+import { push as routerActionPush, LOCATION_CHANGE } from 'connected-react-router'
 
 // Dispatch Action Types
 
@@ -16,10 +16,16 @@ const CLEAR_HOVER_YEAR = 'CLEAR_HOVER_YEAR'
 // Primitive Actions
 
 const fetchingData = () => ({ type: FETCHING_DATA })
-const dataFetched = (year, data) => ({ type: DATA_FETCHED, payload: [year, data] })
-const fetchError = (year, message) => ({ type: FETCH_ERROR, payload: [year, message] })
+const dataFetched = (year, data) => ({
+  type: DATA_FETCHED,
+  payload: [year, data]
+})
+const fetchError = (year, message) => ({
+  type: FETCH_ERROR,
+  payload: [year, message]
+})
 const fetchComplete = () => ({ type: FETCH_COMPLETE })
-const setHoverYear = (year) => ({ type: SET_HOVER_YEAR, payload: [year] })
+const setHoverYear = year => ({ type: SET_HOVER_YEAR, payload: [year] })
 const clearHoverYear = () => ({ type: CLEAR_HOVER_YEAR })
 
 // Exported Actions
@@ -31,7 +37,7 @@ const prefetchData = () => {
   }
 }
 
-const toggleYearSelection = (year) => {
+const toggleYearSelection = year => {
   return (dispatch, getState) => {
     var years = getState().coOps.years
     if (years.indexOf(year) === -1) {
@@ -39,13 +45,21 @@ const toggleYearSelection = (year) => {
     } else {
       years = years.filter(keep => keep !== year)
     }
-    dispatch(routeActions.push({ query: makeQuery(getState().coOps, { years: years.join(' ') }) }))
+    dispatch(
+      routerActionPush({
+        query: makeQuery(getState().coOps, { years: years.join(' ') })
+      })
+    )
   }
 }
 
-const selectStationID = (stationID) => {
+const selectStationID = stationID => {
   return (dispatch, getState) => {
-    dispatch(routeActions.push({ query: makeQuery(getState().coOps, { stn: stationID }) }))
+    dispatch(
+      routerActionPush({
+        query: makeQuery(getState().coOps, { stn: stationID })
+      })
+    )
   }
 }
 
@@ -86,28 +100,28 @@ function fetchOne (year, station, done) {
   var begin = Moment(year + '-01-01 00:00', 'YYYY-MM-DD HH:mm')
   var end = begin.clone().endOf('year')
   fetch(
-    `/api/datagetter?begin_date=${begin.format('YYYYMMDD HH:mm')}&end_date=${end.format('YYYYMMDD HH:mm')}&station=${station}&product=water_temperature&units=english&time_zone=lst&application=gj262@github&format=json&interval=h`
-  ).then(response => {
-    if (!response.ok || response.status >= 400) {
-      return done(null, fetchError(year, 'Bad response from server.'))
-    }
-    return response.json()
-  }).then(json => {
-    if ('error' in json) {
-      return done(null, fetchError(year, json.error.message))
-    }
-    done(
-      dropAnomalousValues(
-        parseValues(
-          json.data
-        )
-      ),
-      null
-    )
-  }).catch(error => {
-    console.log('request failed', error)
-    return done(null, fetchError(year, 'Failed to fetch data'))
-  })
+    `/api/datagetter?begin_date=${begin.format(
+      'YYYYMMDD HH:mm'
+    )}&end_date=${end.format(
+      'YYYYMMDD HH:mm'
+    )}&station=${station}&product=water_temperature&units=english&time_zone=lst&application=gj262@github&format=json&interval=h`
+  )
+    .then(response => {
+      if (!response.ok || response.status >= 400) {
+        return done(null, fetchError(year, 'Bad response from server.'))
+      }
+      return response.json()
+    })
+    .then(json => {
+      if ('error' in json) {
+        return done(null, fetchError(year, json.error.message))
+      }
+      done(dropAnomalousValues(parseValues(json.data)), null)
+    })
+    .catch(error => {
+      console.log('request failed', error)
+      return done(null, fetchError(year, 'Failed to fetch data'))
+    })
 }
 
 function parseValues (data) {
@@ -147,8 +161,10 @@ function dropAnomalousValues (data) {
     if (n2 >= data.length) {
       n2 = n1 - 1
     }
-    if (Math.abs(datum.v - data[n1].v) > VARIANCE &&
-        Math.abs(datum.v - data[n2].v) > VARIANCE) {
+    if (
+      Math.abs(datum.v - data[n1].v) > VARIANCE &&
+      Math.abs(datum.v - data[n2].v) > VARIANCE
+    ) {
       console.warn(`Dropping variant datum ${datum.t} ${datum.v}`)
       return false
     }
@@ -178,7 +194,12 @@ export default createReducer(
   // initial state
   {
     isFetching: false,
-    years: [Moment().year(), Moment().subtract(1, 'y').year()],
+    years: [
+      Moment().year(),
+      Moment()
+        .subtract(1, 'y')
+        .year()
+    ],
     selectedStationID: '9414290',
     data: [],
     errors: [],
@@ -188,20 +209,18 @@ export default createReducer(
   },
   // reducers
   {
-    [FETCHING_DATA]: (state) => {
+    [FETCHING_DATA]: state => {
       return Object.assign({}, state, { isFetching: true, errors: [] })
     },
     [DATA_FETCHED]: (state, [year, data]) => {
       var [min, max] = createDailyMinMaxGraphs(data)
       var partial = detectPartial(min, year)
-      data = state.data.concat(
-        {
-          year: year,
-          partial: partial,
-          [MIN]: { data: min, min: getOverallMin(min) },
-          [MAX]: { data: max, max: getOverallMax(max) }
-        }
-      )
+      data = state.data.concat({
+        year: year,
+        partial: partial,
+        [MIN]: { data: min, min: getOverallMin(min) },
+        [MAX]: { data: max, max: getOverallMax(max) }
+      })
       detectBogusYears(data)
       generateHeatIndices(data)
       return Object.assign({}, state, {
@@ -221,19 +240,30 @@ export default createReducer(
         years: state.years.filter(keep => keep !== year)
       })
     },
-    [FETCH_COMPLETE]: (state) => {
+    [FETCH_COMPLETE]: state => {
       return Object.assign({}, state, { isFetching: false })
     },
-    [UPDATE_LOCATION]: (state, location) => {
+    [LOCATION_CHANGE]: (state, { location }) => {
       if (!location || !location.query) {
         return state
       }
-      if (location.query.years && location.query.years !== state.years.join(' ')) {
-        var years = location.query.years.split(/ /).map(year => parseInt(year, 10))
+      if (
+        location.query.years &&
+        location.query.years !== state.years.join(' ')
+      ) {
+        var years = location.query.years
+          .split(/ /)
+          .map(year => parseInt(year, 10))
         state = Object.assign({}, state, { years: years })
       }
-      if (location.query.stn && location.query.stn !== state.selectedStationID) {
-        state = Object.assign({}, state, { data: [], selectedStationID: location.query.stn })
+      if (
+        location.query.stn &&
+        location.query.stn !== state.selectedStationID
+      ) {
+        state = Object.assign({}, state, {
+          data: [],
+          selectedStationID: location.query.stn
+        })
       }
       return state
     },
@@ -242,7 +272,7 @@ export default createReducer(
         hoverYear: year
       })
     },
-    [CLEAR_HOVER_YEAR]: (state) => {
+    [CLEAR_HOVER_YEAR]: state => {
       return Object.assign({}, state, {
         hoverYear: null
       })
@@ -255,15 +285,31 @@ function createDailyMinMaxGraphs (data) {
   var maxGraph = []
   data.forEach(datum => {
     var referenceDate = 2012 + datum.t.substr(4, 6)
-    if (minGraph.length === 0 || minGraph[minGraph.length - 1].dateStr !== referenceDate) {
+    if (
+      minGraph.length === 0 ||
+      minGraph[minGraph.length - 1].dateStr !== referenceDate
+    ) {
       let date = Moment(referenceDate, 'YYYY-MM-DD')
-      minGraph.push({ dateObj: date, dateStr: referenceDate, x: date.toDate(), y: datum.v })
+      minGraph.push({
+        dateObj: date,
+        dateStr: referenceDate,
+        x: date.toDate(),
+        y: datum.v
+      })
     } else if (minGraph[minGraph.length - 1].y > datum.v) {
       minGraph[minGraph.length - 1].y = datum.v
     }
-    if (maxGraph.length === 0 || maxGraph[maxGraph.length - 1].dateStr !== referenceDate) {
+    if (
+      maxGraph.length === 0 ||
+      maxGraph[maxGraph.length - 1].dateStr !== referenceDate
+    ) {
       let date = Moment(referenceDate, 'YYYY-MM-DD')
-      maxGraph.push({ dateObj: date, dateStr: referenceDate, x: date.toDate(), y: datum.v })
+      maxGraph.push({
+        dateObj: date,
+        dateStr: referenceDate,
+        x: date.toDate(),
+        y: datum.v
+      })
     } else if (maxGraph[maxGraph.length - 1].y < datum.v) {
       maxGraph[maxGraph.length - 1].y = datum.v
     }
@@ -316,7 +362,9 @@ function detectPartial (data, year) {
 function generateHeatIndices (data) {
   var minRange = []
   var maxRange = []
-  var completeNonBogusYears = data.filter(dataset => !dataset.partial && !dataset.bogus)
+  var completeNonBogusYears = data.filter(
+    dataset => !dataset.partial && !dataset.bogus
+  )
   completeNonBogusYears.forEach(dataset => {
     if (minRange.length !== 2 || minRange[0] > dataset[MIN].min) {
       minRange[0] = dataset[MIN].min
@@ -339,10 +387,12 @@ function generateHeatIndices (data) {
 
   completeNonBogusYears.forEach(dataset => {
     if (minRange.length === 2 && minRange[0] !== minRange[1]) {
-      dataset[MIN].heatIndex = (dataset[MIN].min - minRange[0]) / (minRange[1] - minRange[0])
+      dataset[MIN].heatIndex =
+        (dataset[MIN].min - minRange[0]) / (minRange[1] - minRange[0])
     }
     if (maxRange.length === 2 && maxRange[0] !== maxRange[1]) {
-      dataset[MAX].heatIndex = (dataset[MAX].max - maxRange[0]) / (maxRange[1] - maxRange[0])
+      dataset[MAX].heatIndex =
+        (dataset[MAX].max - maxRange[0]) / (maxRange[1] - maxRange[0])
     }
   })
 }
@@ -354,11 +404,19 @@ function detectBogusYears (data) {
   // year. However some stations are whacked e.g. Port Chicago. If a
   // year is wildly outside of that range then mark it as bogus.
   data.forEach(dataset => {
-    var completeNonBogusYears = data.filter(dataset => !dataset.partial && !dataset.bogus)
-    var deviations = completeNonBogusYears.map(dataset => dataset[MAX].max - dataset[MIN].min)
+    var completeNonBogusYears = data.filter(
+      dataset => !dataset.partial && !dataset.bogus
+    )
+    var deviations = completeNonBogusYears.map(
+      dataset => dataset[MAX].max - dataset[MIN].min
+    )
     if (deviations.length >= 2) {
-      var avgDeviation = deviations.reduce((previous, current) => previous + current) / deviations.length
-      dataset.bogus = (dataset[MAX].max - dataset[MIN].min > avgDeviation * BOGUS_DEVIATION_FACTOR)
+      var avgDeviation =
+        deviations.reduce((previous, current) => previous + current) /
+        deviations.length
+      dataset.bogus =
+        dataset[MAX].max - dataset[MIN].min >
+        avgDeviation * BOGUS_DEVIATION_FACTOR
     }
   })
 }
@@ -369,8 +427,10 @@ function compileWaterTempStations (stations) {
   // passed through: http://json.online-toolz.com/tools/xml-json-convertor.php
   // saved to 'stations.js'
   var hasWaterTemp = parameter => {
-    return parameter['@attributes'].name === 'Water Temp' &&
+    return (
+      parameter['@attributes'].name === 'Water Temp' &&
       parameter['@attributes'].status === '1'
+    )
   }
   return stations.station
     .filter(stationXML => {

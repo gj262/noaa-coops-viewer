@@ -13,10 +13,13 @@ export default class StationSelector extends React.Component {
 
   render () {
     var options = this.makeStationOptions()
+
     return (
       <div className='text-left col-xs-offset-3 col-xs-6 col-lg-offset-4 col-lg-4 '>
         <Select
-          value={this.props.selectedStationID}
+          value={options.find(
+            option => option.value === this.props.selectedStationID
+          )}
           clearable={false}
           options={options}
           onChange={this.selectStationID}
@@ -34,7 +37,7 @@ export default class StationSelector extends React.Component {
     })
   }
 
-  selectStationID = stationID => {
-    this.props.selectStationID(stationID)
+  selectStationID = option => {
+    this.props.selectStationID(option.value)
   }
 }
