@@ -20,7 +20,9 @@ export default class LeftPane extends React.Component {
         <h1>NOAA CO-OPs Water Temperatures</h1>
         <StationSelector {...this.props} />
         {this.renderErrors()}
-        <Chart {...this.props} />
+        <div>
+          <Chart {...this.props} />
+        </div>
         {this.renderFooter()}
       </div>
     )

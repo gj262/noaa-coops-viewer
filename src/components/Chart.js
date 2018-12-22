@@ -5,6 +5,7 @@ import { StaticVictoryLine } from 'components/StaticVictory'
 import { MIN, MAX } from 'reducers/coOps'
 import Moment from 'moment'
 import * as d3Scale from 'd3-scale'
+import { timeFormat as d3TimeFormat } from 'd3-time-format'
 
 import './Chart.scss'
 
@@ -138,6 +139,18 @@ export default class Chart extends React.Component {
     }
   }
 
+  get axisStyle () {
+    return {
+      grid: { stroke: '#c9c5bb', strokeWidth: 1 },
+      ticks: { stroke: '#756f6a', size: 5 },
+      tickLabels: {
+        fontFamily: 'Helvetica',
+        color: '#756f6a',
+        fontSize: '10px'
+      }
+    }
+  }
+
   makeXTicks () {
     var months = []
     var start = Moment([2012])
@@ -241,6 +254,7 @@ export default class Chart extends React.Component {
           x: this.state.xDomain,
           y: this.state.yDomain
         }}
+        domainPadding={10}
       >
         {this.renderYAxis()}
         {this.renderXAxis()}
@@ -255,9 +269,8 @@ export default class Chart extends React.Component {
       <VictoryAxis
         dependentAxis
         tickValues={this.state.yTicks}
-        style={{
-          grid: { strokeWidth: 1 }
-        }}
+        style={this.axisStyle}
+        label='&deg;F'
       />
     )
   }
@@ -265,10 +278,10 @@ export default class Chart extends React.Component {
   renderXAxis () {
     return (
       <VictoryAxis
-        style={{
-          grid: { strokeWidth: 1 }
-        }}
+        style={this.axisStyle}
         tickValues={this.state.xTicks}
+        tickFormat={t => d3TimeFormat('%B')}
+        xOffset={10}
       />
     )
   }
