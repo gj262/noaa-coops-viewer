@@ -14,7 +14,7 @@ The chart comes from the excellent [Victory](http://victory.formidable.com/) pro
 
 ### Build & Run
 
-`npm install && npm start`
+`npm install && NODE_ENV=production webpack -p && npm start`
 
 Then connect to http://localhost:5000/
 

@@ -3,7 +3,7 @@
 import PropTypes from 'prop-types'
 
 import React from 'react'
-import { VictoryLine } from 'victory'
+import { VictoryLine } from 'victory-line'
 
 class StaticVictoryLine extends React.Component {
   static propTypes = {

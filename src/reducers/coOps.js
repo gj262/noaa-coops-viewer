@@ -1,6 +1,5 @@
 import createReducer from 'utils/createReducer'
 import fetch from 'isomorphic-fetch'
-import Moment from 'moment'
 import queryString from 'query-string'
 import stations from './stations'
 import {
@@ -35,7 +34,7 @@ const clearHoverYear = () => ({ type: CLEAR_HOVER_YEAR })
 // Exported Actions
 
 const prefetchData = () => {
-  var year = Moment()
+  var year = global.moment()
   return (dispatch, getState) => {
     prefetchFromYear(year, dispatch, getState)
   }
@@ -99,7 +98,7 @@ function prefetchFromYear (year, dispatch, getState) {
 }
 
 function fetchOne (year, station, done) {
-  var begin = Moment(year + '-01-01 00:00', 'YYYY-MM-DD HH:mm')
+  var begin = global.moment(year + '-01-01 00:00', 'YYYY-MM-DD HH:mm')
   var end = begin.clone().endOf('year')
   fetch(
     `/api/datagetter?begin_date=${begin.format(
@@ -195,8 +194,8 @@ export default createReducer(
   {
     isFetching: false,
     years: [
-      Moment().year(),
-      Moment()
+      global.moment().year(),
+      global.moment()
         .subtract(1, 'y')
         .year()
     ],
@@ -290,7 +289,7 @@ function createDailyMinMaxGraphs (data) {
       minGraph.length === 0 ||
       minGraph[minGraph.length - 1].dateStr !== referenceDate
     ) {
-      let date = Moment(referenceDate, 'YYYY-MM-DD')
+      let date = global.moment(referenceDate, 'YYYY-MM-DD')
       minGraph.push({
         dateObj: date,
         dateStr: referenceDate,
@@ -304,7 +303,7 @@ function createDailyMinMaxGraphs (data) {
       maxGraph.length === 0 ||
       maxGraph[maxGraph.length - 1].dateStr !== referenceDate
     ) {
-      let date = Moment(referenceDate, 'YYYY-MM-DD')
+      let date = global.moment(referenceDate, 'YYYY-MM-DD')
       maxGraph.push({
         dateObj: date,
         dateStr: referenceDate,

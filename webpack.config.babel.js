@@ -20,7 +20,8 @@ const webpackConfig = {
   mode: process.env.NODE_ENV,
   name: 'compare',
   target: 'web',
-  devtool: 'inline-source-map',
+  devtool:
+    process.env.NODE_ENV === 'development' ? 'inline-source-map' : 'source-map',
   entry: {
     app: './src/app.js'
   },

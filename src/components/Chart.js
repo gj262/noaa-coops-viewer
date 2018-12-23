@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import { VictoryAxis, VictoryChart } from 'victory'
+import { VictoryAxis } from 'victory-axis'
+import { VictoryChart } from 'victory-chart'
 import { StaticVictoryLine } from 'components/StaticVictory'
 import { MIN, MAX } from 'reducers/coOps'
-import Moment from 'moment'
 import * as d3Scale from 'd3-scale'
 import { timeFormat as d3TimeFormat } from 'd3-time-format'
 
@@ -153,7 +153,7 @@ export default class Chart extends React.Component {
 
   makeXTicks () {
     var months = []
-    var start = Moment([2012])
+    var start = global.moment([2012])
     for (var i = 0; i < 12; i++) {
       months.push(start.clone().toDate())
       start.add(1, 'month')
@@ -162,7 +162,7 @@ export default class Chart extends React.Component {
   }
 
   makeXDomain () {
-    return [Moment([2012]), Moment([2012]).add(1, 'year')]
+    return [global.moment([2012]), global.moment([2012]).add(1, 'year')]
   }
 
   componentWillReceiveProps (nextProps) {
