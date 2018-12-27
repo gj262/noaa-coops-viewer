@@ -1,6 +1,6 @@
 import createReducer from 'utils/createReducer'
 import queryString from 'query-string'
-import stations from './stations'
+import stations from '../data/stations'
 import { LOCATION_CHANGE } from 'connected-react-router'
 
 // Dispatch Action Types
@@ -46,7 +46,7 @@ export default createReducer(
     stations: compileWaterTempStations(stations),
     hoverYear: null
   },
-  // reducers
+  // action handlers
   {
     [FETCHING_DATA]: state => {
       return Object.assign({}, state, { isFetching: true, errors: [] })
