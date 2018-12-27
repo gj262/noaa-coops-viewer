@@ -1,15 +1,11 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import { connect } from 'react-redux'
-import { actions as coOpsActions } from 'reducers/coOps'
+import { actions as coOpsActions } from 'actions/coOps'
 import LeftPane from 'components/LeftPane'
 import RightPane from 'components/RightPane'
 
 import './HomeView.scss'
-
-const mapStateToProps = state => ({
-  ...state.coOps
-})
 
 class HomeView extends React.Component {
   static propTypes = {
@@ -52,6 +48,10 @@ class HomeView extends React.Component {
     )
   }
 }
+
+const mapStateToProps = state => ({
+  ...state.coOps
+})
 
 export default connect(
   mapStateToProps,
