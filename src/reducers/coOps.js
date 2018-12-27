@@ -1,5 +1,6 @@
 import createReducer from 'utils/createReducer'
 import queryString from 'query-string'
+import deepEqual from 'deep-equal'
 import stations from '../data/stations'
 import { LOCATION_CHANGE } from 'connected-react-router'
 
@@ -21,6 +22,23 @@ export const ActionTypes = {
   CLEAR_HOVER_YEAR
 }
 
+// Defaults
+
+const defaultStationID = '9414290'
+const defaultYears = [
+  global.moment().year(),
+  global
+    .moment()
+    .subtract(1, 'y')
+    .year()
+]
+function isDefaultSelection (state) {
+  return (
+    state.selectedStationID === defaultStationID &&
+    deepEqual(state.years, defaultYears)
+  )
+}
+
 // Bounds
 
 export const MIN = 'Minimum'
@@ -32,14 +50,8 @@ export default createReducer(
   // initial state
   {
     isFetching: false,
-    years: [
-      global.moment().year(),
-      global
-        .moment()
-        .subtract(1, 'y')
-        .year()
-    ],
-    selectedStationID: '9414290',
+    years: defaultYears,
+    selectedStationID: null,
     data: [],
     errors: [],
     errorInstance: 0,
@@ -83,8 +95,19 @@ export default createReducer(
       return Object.assign({}, state, { isFetching: false })
     },
     [LOCATION_CHANGE]: (state, { location }) => {
-      if (!location || !location.search) {
+      if (!location) {
         return state
+      }
+      if (!location.search) {
+        if (isDefaultSelection(state)) {
+          return state
+        }
+        return {
+          ...state,
+          selectedStationID: defaultStationID,
+          data: state.selectedStationID === defaultStationID ? state.data : [],
+          years: defaultYears
+        }
       }
       const query = queryString.parse(location.search)
       if (query.years && query.years !== state.years.join(' ')) {

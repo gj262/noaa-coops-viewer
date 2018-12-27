@@ -15,7 +15,7 @@ export default class Chart extends React.Component {
     data: PropTypes.array,
     years: PropTypes.array,
     hoverYear: PropTypes.number,
-    selectedStationID: PropTypes.string.isRequired,
+    selectedStationID: PropTypes.string,
     width: PropTypes.number.isRequired,
     height: PropTypes.number.isRequired
   }

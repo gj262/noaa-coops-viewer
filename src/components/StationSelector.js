@@ -7,7 +7,7 @@ import './StationSelector.scss'
 export default class StationSelector extends React.Component {
   static propTypes = {
     stations: PropTypes.array.isRequired,
-    selectedStationID: PropTypes.string.isRequired,
+    selectedStationID: PropTypes.string,
     selectStationID: PropTypes.func.isRequired
   }
 

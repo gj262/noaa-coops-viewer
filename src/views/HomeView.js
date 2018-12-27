@@ -10,17 +10,26 @@ import './HomeView.scss'
 class HomeView extends React.Component {
   static propTypes = {
     prefetchData: PropTypes.func.isRequired,
-    selectedStationID: PropTypes.string.isRequired,
+    selectedStationID: PropTypes.string,
     pageWidth: PropTypes.number.isRequired,
     pageHeight: PropTypes.number.isRequired
   }
 
-  componentWillMount () {
-    this.props.prefetchData()
+  componentDidMount () {
+    const { selectedStationID } = this.props
+
+    if (selectedStationID) {
+      this.props.prefetchData()
+    }
   }
 
-  componentWillReceiveProps (nextProps) {
-    if (nextProps.selectedStationID !== this.props.selectedStationID) {
+  componentDidUpdate (prevProps) {
+    const { selectedStationID } = this.props
+
+    if (
+      selectedStationID &&
+      selectedStationID !== prevProps.selectedStationID
+    ) {
       this.props.prefetchData()
     }
   }
