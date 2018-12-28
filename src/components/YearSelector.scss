@@ -1,9 +1,7 @@
 .years {
   display: inline-block;
   margin-top: 0.67em;
-  & > tbody > tr {
-    &:hover {
-      background: #e0e0e0;
-    }
+  > tbody > tr.emphasized {
+    background: #e0e0e0;
   }
 }

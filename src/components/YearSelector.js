@@ -13,7 +13,8 @@ export default class YearSelector extends React.Component {
     selection: PropTypes.array.isRequired,
     toggleYearSelection: PropTypes.func.isRequired,
     setHoverYear: PropTypes.func.isRequired,
-    clearHoverYear: PropTypes.func.isRequired
+    clearHoverYear: PropTypes.func.isRequired,
+    hoverYear: PropTypes.number
   }
 
   render () {
@@ -34,6 +35,9 @@ export default class YearSelector extends React.Component {
                 key={yearData.year}
                 onMouseOver={() => this.onMouseOverYear(yearData)}
                 onMouseOut={() => this.onMouseOutYear(yearData)}
+                className={
+                  this.props.hoverYear === yearData.year ? 'emphasized' : ''
+                }
               >
                 <td>
                   <input

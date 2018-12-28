@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import { VictoryAxis } from 'victory-axis'
 import { VictoryChart } from 'victory-chart'
+import { Curve } from 'victory-line'
 import { StaticVictoryLine } from 'components/StaticVictory'
 import { MIN, MAX } from 'reducers/coOps'
 import * as d3Scale from 'd3-scale'
@@ -17,7 +18,9 @@ export default class Chart extends React.Component {
     hoverYear: PropTypes.number,
     selectedStationID: PropTypes.string,
     width: PropTypes.number.isRequired,
-    height: PropTypes.number.isRequired
+    height: PropTypes.number.isRequired,
+    setHoverYear: PropTypes.func.isRequired,
+    clearHoverYear: PropTypes.func.isRequired
   }
 
   static defaultProps = {
@@ -293,6 +296,7 @@ export default class Chart extends React.Component {
       bound +
       this.state.yTicks[0] +
       this.state.yTicks[this.state.yTicks.length - 1]
+
     return (
       <StaticVictoryLine
         key={instanceKey}
@@ -309,6 +313,14 @@ export default class Chart extends React.Component {
           data: this.getLineStyle(dataset),
           label: { color: dataset.color }
         }}
+        dataComponent={
+          <Curve
+            events={{
+              onMouseOver: () => this.props.setHoverYear(dataset.year),
+              onMouseOut: () => this.props.clearHoverYear()
+            }}
+          />
+        }
       />
     )
   }
