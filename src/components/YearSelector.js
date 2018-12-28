@@ -85,6 +85,7 @@ export default class YearSelector extends React.Component {
   }
 
   yearSelect = year => {
+    this.props.clearHoverYear()
     this.props.toggleYearSelection(year)
   }
 
