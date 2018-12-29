@@ -12,6 +12,7 @@ import './Chart.scss'
 
 export default class Chart extends React.Component {
   static propTypes = {
+    /* eslint-disable react/no-unused-prop-types */
     linePalette: PropTypes.array,
     data: PropTypes.array,
     years: PropTypes.array,
@@ -130,15 +131,19 @@ export default class Chart extends React.Component {
     ]
   }
 
-  constructor () {
-    super()
+  constructor (props) {
+    super(props)
+
+    var yTicks = this.makeYTicks(props.data)
+    var yDomain = this.makeYDomain(yTicks)
+
     this.state = {
-      chartData: [],
-      availableYears: [],
+      chartData: this.makeChartData(props),
+      availableYears: this.makeAvailableYears(props),
+      yTicks,
+      yDomain,
       xTicks: this.makeXTicks(),
-      xDomain: this.makeXDomain(),
-      yTicks: [],
-      yDomain: []
+      xDomain: this.makeXDomain()
     }
   }
 
@@ -169,37 +174,35 @@ export default class Chart extends React.Component {
   }
 
   componentWillReceiveProps (nextProps) {
-    // Map to display data as new data is received.
-    var chartData = nextProps.data.map(dataset => {
-      var chartDataset = Object.assign({}, dataset)
-      var colorIdx = dataset.year % this.props.linePalette.length
-      chartDataset.color = this.props.linePalette[colorIdx]
-      chartDataset.visible =
-        nextProps.years.indexOf(dataset.year) !== -1 ||
-        nextProps.hoverYear === dataset.year
-      chartDataset.mouseover = nextProps.hoverYear === dataset.year
-      chartDataset.thin = !chartDataset.visible && !chartDataset.bogus
-      return chartDataset
-    })
-
-    var availableYears = this.state.availableYears
-    nextProps.data.forEach(dataset => {
-      if (availableYears.indexOf(dataset.year) === -1) {
-        availableYears = availableYears
-          .concat(dataset.year)
-          .sort((a, b) => b - a)
-      }
-    })
-
     var yTicks = this.makeYTicks(nextProps.data)
     var yDomain = this.makeYDomain(yTicks)
 
     this.setState({
-      chartData,
-      availableYears,
+      chartData: this.makeChartData(nextProps),
+      availableYears: this.makeAvailableYears(nextProps),
       yTicks,
       yDomain
     })
+  }
+
+  makeChartData (props) {
+    return props.data.map(dataset => {
+      var chartDataset = Object.assign({}, dataset)
+      var colorIdx = dataset.year % props.linePalette.length
+      chartDataset.color = props.linePalette[colorIdx]
+      chartDataset.visible =
+        props.years.indexOf(dataset.year) !== -1 ||
+        props.hoverYear === dataset.year
+      chartDataset.mouseover = props.hoverYear === dataset.year
+      chartDataset.thin = !chartDataset.visible && !chartDataset.bogus
+      return chartDataset
+    })
+  }
+
+  makeAvailableYears (props) {
+    var availableYears = props.data.map(dataset => dataset.year)
+
+    return availableYears.sort((a, b) => b - a)
   }
 
   makeYTicks (data) {

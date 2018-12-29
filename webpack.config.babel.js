@@ -23,7 +23,7 @@ const webpackConfig = {
   devtool:
     process.env.NODE_ENV === 'development' ? 'inline-source-map' : 'source-map',
   entry: {
-    app: './src/app.js'
+    app: process.env.ENTRY || './src/app.js'
   },
   output: {
     filename: `[name].js`,

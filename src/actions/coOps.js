@@ -56,7 +56,8 @@ export const actions = {
   toggleYearSelection,
   selectStationID,
   setHoverYear,
-  clearHoverYear
+  clearHoverYear,
+  dataFetched
 }
 
 function prefetchFromYear (year, dispatch, getState) {
@@ -112,7 +113,7 @@ function fetchOne (year, station, done) {
     })
 }
 
-function parseValues (data) {
+export function parseValues (data) {
   data = data || []
   return data.filter(datum => {
     if ('t' in datum && 'v' in datum && datum.v) {
@@ -134,7 +135,7 @@ function parseValues (data) {
 
 const VARIANCE = 5.0
 
-function dropAnomalousValues (data) {
+export function dropAnomalousValues (data) {
   // Compare each datum to two neighbors and drop if the value is too
   // different.
   if (data.length < 3) {
