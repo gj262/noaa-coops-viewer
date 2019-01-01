@@ -4,7 +4,6 @@ import { VictoryAxis } from 'victory-axis'
 import { VictoryChart } from 'victory-chart'
 import { Curve } from 'victory-line'
 import { StaticVictoryLine } from 'components/StaticVictory'
-import { MIN, MAX } from 'reducers/coOps'
 import * as d3Scale from 'd3-scale'
 import { timeFormat as d3TimeFormat } from 'd3-time-format'
 
@@ -186,21 +185,21 @@ export default class Chart extends React.Component {
   }
 
   makeChartData (props) {
-    return props.data.map(dataset => {
-      var chartDataset = Object.assign({}, dataset)
-      var colorIdx = dataset.year % props.linePalette.length
-      chartDataset.color = props.linePalette[colorIdx]
-      chartDataset.visible =
-        props.years.indexOf(dataset.year) !== -1 ||
-        props.hoverYear === dataset.year
-      chartDataset.mouseover = props.hoverYear === dataset.year
-      chartDataset.thin = !chartDataset.visible && !chartDataset.bogus
-      return chartDataset
+    return props.data.map(yearData => {
+      var chartYearData = Object.assign({}, yearData)
+      var colorIdx = yearData.year % props.linePalette.length
+      chartYearData.color = props.linePalette[colorIdx]
+      chartYearData.visible =
+        props.years.indexOf(yearData.year) !== -1 ||
+        props.hoverYear === yearData.year
+      chartYearData.mouseover = props.hoverYear === yearData.year
+      chartYearData.thin = !chartYearData.visible && !chartYearData.bogus
+      return chartYearData
     })
   }
 
   makeAvailableYears (props) {
-    var availableYears = props.data.map(dataset => dataset.year)
+    var availableYears = props.data.map(yearData => yearData.year)
 
     return availableYears.sort((a, b) => b - a)
   }
@@ -212,13 +211,13 @@ export default class Chart extends React.Component {
     var min
     var max
     data
-      .filter(dataset => !dataset.bogus)
-      .forEach(dataset => {
-        if (!min || dataset[MIN].min < min) {
-          min = dataset[MIN].min
+      .filter(yearData => !yearData.bogus)
+      .forEach(yearData => {
+        if (!min || yearData.min < min) {
+          min = yearData.min
         }
-        if (!max || dataset[MAX].max > max) {
-          max = dataset[MAX].max
+        if (!max || yearData.max > max) {
+          max = yearData.max
         }
       })
     var ticks = []
@@ -264,8 +263,9 @@ export default class Chart extends React.Component {
       >
         {this.renderYAxis()}
         {this.renderXAxis()}
-        {this.state.chartData.map(dataset => this.renderLine(dataset, MIN))}
-        {this.state.chartData.map(dataset => this.renderLine(dataset, MAX))}
+        {this.state.chartData.map(yearData =>
+          this.renderLinesForYear(yearData)
+        )}
       </VictoryChart>
     )
   }
@@ -292,50 +292,56 @@ export default class Chart extends React.Component {
     )
   }
 
-  renderLine (dataset, bound) {
-    var instanceKey =
-      this.props.selectedStationID +
-      dataset.year +
-      bound +
-      this.state.yTicks[0] +
-      this.state.yTicks[this.state.yTicks.length - 1]
+  renderLinesForYear (yearData) {
+    return yearData.data.map((chunk, idx) => {
+      var instanceKey =
+        this.props.selectedStationID +
+        yearData.year +
+        idx +
+        this.state.yTicks[0] +
+        this.state.yTicks[this.state.yTicks.length - 1]
 
-    return (
-      <StaticVictoryLine
-        key={instanceKey}
-        updateAttrs={`${dataset.visible} ${dataset.thin} ${dataset.mouseover} ${
-          this.state.yTicks[0]
-        } ${this.state.yTicks[this.state.yTicks.length - 1]}`}
-        range={[
-          this.state.yTicks[0],
-          this.state.yTicks[this.state.yTicks.length - 1]
-        ]}
-        interpolation='natural'
-        data={dataset[bound].data}
-        style={{
-          data: this.getLineStyle(dataset),
-          label: { color: dataset.color }
-        }}
-        dataComponent={
-          <Curve
-            events={{
-              onMouseOver: () => this.props.setHoverYear(dataset.year),
-              onMouseOut: () => this.props.clearHoverYear()
-            }}
-          />
-        }
-      />
-    )
+      return (
+        <StaticVictoryLine
+          key={instanceKey}
+          updateAttrs={`${yearData.visible} ${yearData.thin} ${
+            yearData.mouseover
+          } ${this.state.yTicks[0]} ${
+            this.state.yTicks[this.state.yTicks.length - 1]
+          }`}
+          range={[
+            this.state.yTicks[0],
+            this.state.yTicks[this.state.yTicks.length - 1]
+          ]}
+          interpolation='linear'
+          data={chunk}
+          x={d => new Date('2012' + d.t.substr(4))}
+          y='v'
+          style={{
+            data: this.getLineStyle(yearData),
+            label: { color: yearData.color }
+          }}
+          dataComponent={
+            <Curve
+              events={{
+                onMouseOver: () => this.props.setHoverYear(yearData.year),
+                onMouseOut: () => this.props.clearHoverYear()
+              }}
+            />
+          }
+        />
+      )
+    })
   }
 
-  getLineStyle (dataset) {
+  getLineStyle (yearData) {
     return {
-      stroke: dataset.mouseover
+      stroke: yearData.mouseover
         ? '#000000'
-        : dataset.visible
-          ? dataset.color
+        : yearData.visible
+          ? yearData.color
           : 'lightGrey',
-      strokeWidth: dataset.visible ? 2 : dataset.thin ? 0.5 : 0
+      strokeWidth: yearData.visible ? 2 : yearData.thin ? 0.5 : 0
     }
   }
 }

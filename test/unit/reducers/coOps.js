@@ -2,7 +2,8 @@ import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { createStore } from 'redux'
 import { LOCATION_CHANGE } from 'connected-react-router'
-import coOpsReducer from 'reducers/coOps'
+import coOpsReducer, { fromCoOps } from 'reducers/coOps'
+import { actions as coOpsActions } from 'actions/coOps'
 
 let store
 
@@ -11,33 +12,200 @@ describe('coOps reducer', () => {
     store = createStore(coOpsReducer)
   })
 
-  it('has no selected station initially', () => {
-    expect(store.getState().selectedStationID).to.equal(null)
+  describe('station selection', () => {
+    it('has no selected station initially', () => {
+      expect(store.getState().selectedStationID).to.equal(null)
+    })
+
+    it('initializes to something useful from the initial router action', () => {
+      store.dispatch({ type: LOCATION_CHANGE, payload: { location: {} } })
+      expect(store.getState().selectedStationID).to.equal('9414290')
+    })
+
+    it('can change the station via router action', () => {
+      store.dispatch({
+        type: LOCATION_CHANGE,
+        payload: { location: { search: '?stn=blah' } }
+      })
+      expect(store.getState().selectedStationID).to.equal('blah')
+    })
+
+    it('does not lose state from search=default to no search', () => {
+      store.dispatch({
+        type: LOCATION_CHANGE,
+        payload: { location: { search: '?stn=9414290' } }
+      })
+      const originalState = store.getState()
+      store.dispatch({
+        type: LOCATION_CHANGE,
+        payload: { location: {} }
+      })
+      expect(store.getState()).to.equal(originalState)
+    })
   })
 
-  it('initializes to something useful from the initial router action', () => {
-    store.dispatch({ type: LOCATION_CHANGE, payload: { location: {} } })
-    expect(store.getState().selectedStationID).to.equal('9414290')
-  })
+  describe('station data', () => {
+    it('stores data', () => {
+      store.dispatch(
+        coOpsActions.dataFetched('2016', [
+          { t: '2016-01-01 00:00', v: '51.5', f: '0,0,0' }
+        ])
+      )
+      expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([
+        [{ t: '2016-01-01 00:00', v: 51.5 }]
+      ])
+    })
 
-  it('can change the station via router action', () => {
-    store.dispatch({
-      type: LOCATION_CHANGE,
-      payload: { location: { search: '?stn=blah' } }
+    it('drops data - no value', () => {
+      store.dispatch(
+        coOpsActions.dataFetched('2016', [
+          { t: '2016-01-01 00:00', v: '', f: '0,0,0' }
+        ])
+      )
+      expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([])
     })
-    expect(store.getState().selectedStationID).to.equal('blah')
-  })
 
-  it('does not lose state from search=default to no search', () => {
-    store.dispatch({
-      type: LOCATION_CHANGE,
-      payload: { location: { search: '?stn=9414290' } }
+    it('drops data - no value II', () => {
+      store.dispatch(
+        coOpsActions.dataFetched('2016', [
+          { t: '2016-01-01 00:00', v: '0.0', f: '0,0,0' }
+        ])
+      )
+      expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([])
     })
-    const originalState = store.getState()
-    store.dispatch({
-      type: LOCATION_CHANGE,
-      payload: { location: {} }
+
+    it('drops data - bad value', () => {
+      store.dispatch(
+        coOpsActions.dataFetched('2016', [
+          { t: '2016-01-01 00:00', v: 'bad float', f: '0,0,0' }
+        ])
+      )
+      expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([])
     })
-    expect(store.getState()).to.equal(originalState)
+
+    it('drops data - anomolous I', () => {
+      store.dispatch(
+        coOpsActions.dataFetched('2016', [
+          { t: '2016-01-01 00:00', v: '51.5', f: '0,0,0' },
+          { t: '2016-01-01 01:00', v: '51.5', f: '0,0,0' },
+          { t: '2016-01-01 02:00', v: '88.0', f: '0,0,0' }
+        ])
+      )
+      expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([
+        [{ t: '2016-01-01 00:00', v: 51.5 }, { t: '2016-01-01 01:00', v: 51.5 }]
+      ])
+    })
+
+    it('drops data - anomolous II', () => {
+      store.dispatch(
+        coOpsActions.dataFetched('2016', [
+          { t: '2016-01-01 00:00', v: '51.5', f: '0,0,0' },
+          { t: '2016-01-01 01:00', v: '88.5', f: '0,0,0' },
+          { t: '2016-01-01 02:00', v: '88.0', f: '0,0,0' }
+        ])
+      )
+      expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([
+        [{ t: '2016-01-01 01:00', v: 88.5 }, { t: '2016-01-01 02:00', v: 88.0 }]
+      ])
+    })
+
+    it('drops data - anomolous III', () => {
+      store.dispatch(
+        coOpsActions.dataFetched('2016', [
+          { t: '2016-01-01 00:00', v: '88.5', f: '0,0,0' },
+          { t: '2016-01-01 01:00', v: '51.5', f: '0,0,0' },
+          { t: '2016-01-01 02:00', v: '88.0', f: '0,0,0' }
+        ])
+      )
+      expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([
+        [{ t: '2016-01-01 00:00', v: 88.5 }, { t: '2016-01-01 02:00', v: 88.0 }]
+      ])
+    })
+
+    it('drops data - not hourly', () => {
+      store.dispatch(
+        coOpsActions.dataFetched('2016', [
+          { t: '2016-01-01 00:30', v: '51.5', f: '0,0,0' }
+        ])
+      )
+      expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([])
+    })
+
+    it('drops data - other year', () => {
+      store.dispatch(
+        coOpsActions.dataFetched('2016', [
+          { t: '2015-01-01 00:00', v: '51.5', f: '0,0,0' }
+        ])
+      )
+      expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([])
+    })
+
+    it('drops data - bad date', () => {
+      store.dispatch(
+        coOpsActions.dataFetched('2016', [
+          { t: '2016 bad date 00:00', v: '51.5', f: '0,0,0' }
+        ])
+      )
+      expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([])
+    })
+
+    it('stores multiple data sets for non contiguous graphs', () => {
+      store.dispatch(
+        coOpsActions.dataFetched('2016', [
+          { t: '2016-01-01 00:00', v: '51.5', f: '0,0,0' },
+          { t: '2016-01-02 00:00', v: '51.5', f: '0,0,0' }
+        ])
+      )
+      expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([
+        [{ t: '2016-01-01 00:00', v: 51.5 }],
+        [{ t: '2016-01-02 00:00', v: 51.5 }]
+      ])
+    })
+
+    it('calcs a min', () => {
+      store.dispatch(
+        coOpsActions.dataFetched('2016', [
+          { t: '2016-01-01 00:00', v: '52.5', f: '0,0,0' },
+          { t: '2016-01-02 00:00', v: '51.5', f: '0,0,0' }
+        ])
+      )
+      expect(fromCoOps.getData(store.getState(), '2016').min).to.equal(51.5)
+    })
+
+    it('calcs a max', () => {
+      store.dispatch(
+        coOpsActions.dataFetched('2016', [
+          { t: '2016-01-01 00:00', v: '52.5', f: '0,0,0' },
+          { t: '2016-01-02 00:00', v: '51.5', f: '0,0,0' }
+        ])
+      )
+      expect(fromCoOps.getData(store.getState(), '2016').max).to.equal(52.5)
+    })
+
+    // RHS
+    // 'spots partialness - beginning'
+    // 'spots partialness - split'
+    // 'spots partialness - end'
+    // 'generates heat'
+    // 'detects bogosity'
+    // 'leap year !?!'
   })
 })
+
+// function aFullYearOfDataReceived (year) {
+//   var begin = Moment(year + '-01-01 00:00', 'YYYY-MM-DD HH:mm')
+//   var end = begin.clone().endOf('year')
+//   const data = []
+//   for (var date = begin; date.isSameOrBefore(end); date = date.add(1, 'hour')) {
+//     data.push({ v: '51.0', t: date.format('YYYY-MM-DD HH:mm'), f: '0,0,0' })
+//   }
+//   return data
+// }
+
+// function aFullYearOfDataStored (year) {
+//   return aFullYearOfDataReceived(year).map(item => {
+//     delete item.f
+//     item.v = parseFloat(item.v)
+//     return item
+//   })
+// }
