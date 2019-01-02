@@ -9,7 +9,73 @@ import { timeFormat as d3TimeFormat } from 'd3-time-format'
 
 import './Chart.scss'
 
-export default class Chart extends React.Component {
+export function scaleChart (ToScale) {
+  class Scaled extends React.Component {
+    static propTypes = {
+      pxPerPoint: PropTypes.number.isRequired,
+      width: PropTypes.number.isRequired,
+      data: PropTypes.array.isRequired
+    }
+
+    render () {
+      return <ToScale {...this.props} data={this.downsample()} />
+    }
+
+    downsample () {
+      const { data, pxPerPoint, width } = this.props
+
+      if (!pxPerPoint || !width) {
+        return data
+      }
+
+      const pointsToDisplay = Math.floor(width / pxPerPoint)
+
+      const downsampled = data.map(yearData => {
+        const datumTotalCount = yearData.data.reduce(
+          (acc, chunk) => acc + chunk.length,
+          0
+        )
+        const downsampleCount = Math.ceil(datumTotalCount / pointsToDisplay)
+
+        if (downsampleCount <= 1) {
+          return yearData
+        }
+
+        const thisYearData = { ...yearData }
+
+        thisYearData.data = thisYearData.data
+          .map(chunk => this.downsampleChunk(chunk, downsampleCount))
+          .filter(chunk => chunk.length > 0)
+
+        return thisYearData
+      })
+
+      return downsampled
+    }
+
+    downsampleChunk (chunk, downsampleCount) {
+      let thisChunk = [...chunk]
+      let downsampled = []
+      const sampleMidPoint = Math.floor(downsampleCount / 2)
+      while (thisChunk.length >= sampleMidPoint) {
+        const sample = thisChunk.splice(0, downsampleCount)
+        const average =
+          sample.reduce((acc, datum) => acc + datum.v, 0) / sample.length
+        const indexForSampleTime =
+          sampleMidPoint < sample.length ? sampleMidPoint : sample.length - 1
+        downsampled.push({
+          v: average,
+          t: sample[indexForSampleTime].t
+        })
+      }
+      return downsampled
+    }
+  }
+
+  return Scaled
+}
+
+class Chart extends React.Component {
   static propTypes = {
     /* eslint-disable react/no-unused-prop-types */
     linePalette: PropTypes.array,
@@ -345,3 +411,5 @@ export default class Chart extends React.Component {
     }
   }
 }
+
+export default scaleChart(Chart)

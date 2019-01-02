@@ -1,11 +1,15 @@
 import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { createStore } from 'redux'
+import Moment from 'moment'
 import { LOCATION_CHANGE } from 'connected-react-router'
 import coOpsReducer, { fromCoOps } from 'reducers/coOps'
 import { actions as coOpsActions } from 'actions/coOps'
 
+/* eslint-disable no-unused-expressions */
+
 let store
+let fullYear = aFullYearOfDataReceived('2016')
 
 describe('coOps reducer', () => {
   beforeEach(() => {
@@ -182,30 +186,35 @@ describe('coOps reducer', () => {
       expect(fromCoOps.getData(store.getState(), '2016').max).to.equal(52.5)
     })
 
-    // RHS
-    // 'spots partialness - beginning'
-    // 'spots partialness - split'
-    // 'spots partialness - end'
-    // 'generates heat'
-    // 'detects bogosity'
-    // 'leap year !?!'
+    it('spots partialness - gap at beginning', () => {
+      let thisFullYear = [...fullYear]
+      thisFullYear.shift()
+      store.dispatch(coOpsActions.dataFetched('2016', thisFullYear))
+      expect(fromCoOps.getData(store.getState(), '2016').partial).to.be.true
+    })
+
+    it('spots partialness - gap at end', () => {
+      let thisFullYear = [...fullYear]
+      thisFullYear.pop()
+      store.dispatch(coOpsActions.dataFetched('2016', thisFullYear))
+      expect(fromCoOps.getData(store.getState(), '2016').partial).to.be.true
+    })
+
+    it('spots partialness - splits', () => {
+      let thisFullYear = [...fullYear]
+      thisFullYear.splice(100, 1)
+      store.dispatch(coOpsActions.dataFetched('2016', thisFullYear))
+      expect(fromCoOps.getData(store.getState(), '2016').partial).to.be.true
+    })
   })
 })
 
-// function aFullYearOfDataReceived (year) {
-//   var begin = Moment(year + '-01-01 00:00', 'YYYY-MM-DD HH:mm')
-//   var end = begin.clone().endOf('year')
-//   const data = []
-//   for (var date = begin; date.isSameOrBefore(end); date = date.add(1, 'hour')) {
-//     data.push({ v: '51.0', t: date.format('YYYY-MM-DD HH:mm'), f: '0,0,0' })
-//   }
-//   return data
-// }
-
-// function aFullYearOfDataStored (year) {
-//   return aFullYearOfDataReceived(year).map(item => {
-//     delete item.f
-//     item.v = parseFloat(item.v)
-//     return item
-//   })
-// }
+function aFullYearOfDataReceived (year) {
+  var begin = Moment(year + '-01-01 00:00', 'YYYY-MM-DD HH:mm')
+  var end = begin.clone().endOf('year')
+  const data = []
+  for (var date = begin; date.isSameOrBefore(end); date = date.add(1, 'hour')) {
+    data.push({ v: '51.0', t: date.format('YYYY-MM-DD HH:mm'), f: '0,0,0' })
+  }
+  return data
+}

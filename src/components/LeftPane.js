@@ -21,7 +21,7 @@ export default class LeftPane extends React.Component {
         <StationSelector {...this.props} />
         {this.renderErrors()}
         <div>
-          <Chart {...this.props} />
+          <Chart pxPerPoint={10} {...this.props} />
         </div>
         {this.renderFooter()}
       </div>

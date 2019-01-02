@@ -1,4 +1,7 @@
 import moment from 'moment'
+import Enzyme from 'enzyme'
+import Adapter from 'enzyme-adapter-react-16'
+
 global.moment = moment
 
 const { JSDOM } = require('jsdom')
@@ -27,3 +30,5 @@ global.cancelAnimationFrame = function (id) {
 copyProps(window, global)
 
 window.debug = require('debug')
+
+Enzyme.configure({ adapter: new Adapter() })

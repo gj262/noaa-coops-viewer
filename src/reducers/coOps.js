@@ -40,11 +40,6 @@ function isDefaultSelection (state) {
   )
 }
 
-// Bounds
-
-export const MIN = 'Minimum'
-export const MAX = 'Maximum'
-
 // Reducer
 
 export default createReducer(
@@ -72,8 +67,10 @@ export default createReducer(
         year,
         data: splitData,
         min: getOverallMin(splitData),
-        max: getOverallMax(splitData)
+        max: getOverallMax(splitData),
+        partial: detectPartial(splitData, year)
       })
+      generateHeatIndices(dataset)
       return Object.assign({}, state, {
         isFetching: false,
         data: dataset
@@ -137,16 +134,20 @@ export default createReducer(
 
 function parseValues (data, year) {
   data = data || []
+
+  const hourRe = /[012]\d:00$/
+  const dateRe = /^\d\d\d\d-\d\d-\d\d \d\d:\d\d$/
+
   return data
     .filter(datum => {
       if ('t' in datum && 'v' in datum && datum.v) {
-        if (!/[012]\d:00$/.test(datum.t)) {
+        if (!hourRe.test(datum.t)) {
           return false
         }
-        if (datum.t.substr(0, 4) !== year) {
+        if (datum.t.substr(0, 4) !== year + '') {
           return false
         }
-        if (!global.moment(datum.t, 'YYYY-MM-DD HH:mm', true).isValid()) {
+        if (!dateRe.test(datum.t)) {
           return false
         }
         try {
@@ -250,88 +251,60 @@ function getOverallMax (data) {
   return max
 }
 
-// function detectPartial (data, year) {
-//   if (!data || data.length === 0) {
-//     return true
-//   }
-//   var start = data[0].dateObj.clone().startOf('year')
-//   var end = start.clone().endOf('year')
-//   if (data[0].dateObj.format('MM-DD') !== start.format('MM-DD')) {
-//     debug(`the data for ${year} did not begin at the start of the year`)
-//     return true
-//   }
-//   if (data[data.length - 1].dateObj.format('MM-DD') !== end.format('MM-DD')) {
-//     debug(`the data for ${year} did not end at the end of the year`)
-//     return true
-//   }
-//   if (data.length < 330) {
-//     debug(`data is missing for ${year}`)
-//     return true
-//   }
-//   return false
-// }
+function detectPartial (data, year) {
+  if (!data || data.length !== 1 || data[0].length === 0) {
+    return true
+  }
+  const first = global.moment(data[0][0].t)
+  var start = first.clone().startOf('year')
+  var end = first.clone().endOf('year')
+  const last = global.moment(data[0][data[0].length - 1].t)
+  if (!start.isSame(first)) {
+    debug(`the data for ${year} did not begin at the start of the year`)
+    return true
+  }
+  if (!end.isSame(last)) {
+    debug(`the data for ${year} did not end at the end of the year`)
+    return true
+  }
+  return false
+}
 
-// function generateHeatIndices (data) {
-//   var minRange = []
-//   var maxRange = []
-//   var completeNonBogusYears = data.filter(
-//     dataset => !dataset.partial && !dataset.bogus
-//   )
-//   completeNonBogusYears.forEach(dataset => {
-//     if (minRange.length !== 2 || minRange[0] > dataset[MIN].min) {
-//       minRange[0] = dataset[MIN].min
-//     }
-//     if (minRange.length !== 2 || minRange[1] < dataset[MIN].min) {
-//       minRange[1] = dataset[MIN].min
-//     }
-//     if (maxRange.length !== 2 || maxRange[0] > dataset[MAX].max) {
-//       maxRange[0] = dataset[MAX].max
-//     }
-//     if (maxRange.length !== 2 || maxRange[1] < dataset[MAX].max) {
-//       maxRange[1] = dataset[MAX].max
-//     }
-//   })
+function generateHeatIndices (data) {
+  var minRange = []
+  var maxRange = []
+  var completeYears = data.filter(yearData => !yearData.partial)
+  completeYears.forEach(yearData => {
+    if (minRange.length !== 2 || minRange[0] > yearData.min) {
+      minRange[0] = yearData.min
+    }
+    if (minRange.length !== 2 || minRange[1] < yearData.min) {
+      minRange[1] = yearData.min
+    }
+    if (maxRange.length !== 2 || maxRange[0] > yearData.max) {
+      maxRange[0] = yearData.max
+    }
+    if (maxRange.length !== 2 || maxRange[1] < yearData.max) {
+      maxRange[1] = yearData.max
+    }
+  })
 
-//   data.forEach(dataset => {
-//     delete dataset[MIN].heatIndex
-//     delete dataset[MAX].heatIndex
-//   })
+  data.forEach(yearData => {
+    delete yearData.minHeatIndex
+    delete yearData.maxHeatIndex
+  })
 
-//   completeNonBogusYears.forEach(dataset => {
-//     if (minRange.length === 2 && minRange[0] !== minRange[1]) {
-//       dataset[MIN].heatIndex =
-//         (dataset[MIN].min - minRange[0]) / (minRange[1] - minRange[0])
-//     }
-//     if (maxRange.length === 2 && maxRange[0] !== maxRange[1]) {
-//       dataset[MAX].heatIndex =
-//         (dataset[MAX].max - maxRange[0]) / (maxRange[1] - maxRange[0])
-//     }
-//   })
-// }
-
-// const BOGUS_DEVIATION_FACTOR = 1.375
-
-// function detectBogusYears (data) {
-//   // There should be a standard deviation for min/max values for a
-//   // year. However some stations are whacked e.g. Port Chicago. If a
-//   // year is wildly outside of that range then mark it as bogus.
-//   data.forEach(dataset => {
-//     var completeNonBogusYears = data.filter(
-//       dataset => !dataset.partial && !dataset.bogus
-//     )
-//     var deviations = completeNonBogusYears.map(
-//       dataset => dataset[MAX].max - dataset[MIN].min
-//     )
-//     if (deviations.length >= 2) {
-//       var avgDeviation =
-//         deviations.reduce((previous, current) => previous + current) /
-//         deviations.length
-//       dataset.bogus =
-//         dataset[MAX].max - dataset[MIN].min >
-//         avgDeviation * BOGUS_DEVIATION_FACTOR
-//     }
-//   })
-// }
+  completeYears.forEach(yearData => {
+    if (minRange.length === 2 && minRange[0] !== minRange[1]) {
+      yearData.minHeatIndex =
+        (yearData.min - minRange[0]) / (minRange[1] - minRange[0])
+    }
+    if (maxRange.length === 2 && maxRange[0] !== maxRange[1]) {
+      yearData.maxHeatIndex =
+        (yearData.max - maxRange[0]) / (maxRange[1] - maxRange[0])
+    }
+  })
+}
 
 function compileWaterTempStations (stations) {
   // Convert the raw data to relevant stations with temperature data.
