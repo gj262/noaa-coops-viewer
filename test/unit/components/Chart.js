@@ -22,7 +22,7 @@ describe('scaleChart', () => {
     expect(wrapped.find(WrappedChart)).to.not.have.prop('notPassed')
   })
 
-  it('downsamples data - 1 -> 1', () => {
+  it('down samples data - 1 -> 1', () => {
     const wrapped = mount(
       <ThisTest
         data={[
@@ -39,7 +39,7 @@ describe('scaleChart', () => {
       .deep.equal([{ data: [[{ v: 10.0, t: '2018-12-01 00:00' }]] }])
   })
 
-  it('downsamples data - 2 -> 1', () => {
+  it('down samples data - 2 -> 1', () => {
     const wrapped = mount(
       <ThisTest
         data={[
@@ -61,7 +61,7 @@ describe('scaleChart', () => {
       .deep.equal([{ data: [[{ v: 15.0, t: '2018-12-01 01:00' }]] }])
   })
 
-  it('downsamples data - 3 -> 2 points', () => {
+  it('down samples data - 3 -> 2 points', () => {
     const wrapped = mount(
       <ThisTest
         data={[
@@ -93,7 +93,7 @@ describe('scaleChart', () => {
       ])
   })
 
-  it('downsamples data - 4 -> 2 points', () => {
+  it('down samples data - 4 -> 2 points', () => {
     const wrapped = mount(
       <ThisTest
         data={[
@@ -126,7 +126,7 @@ describe('scaleChart', () => {
       ])
   })
 
-  it('downsamples data - 5 -> 2 points', () => {
+  it('down samples data - 5 -> 2 points', () => {
     const wrapped = mount(
       <ThisTest
         data={[

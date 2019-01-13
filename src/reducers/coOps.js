@@ -61,7 +61,7 @@ export default createReducer(
     },
     [DATA_FETCHED]: (state, [year, dataForYear]) => {
       dataForYear = parseValues(dataForYear, year)
-      let splitData = splitContiguousData(dataForYear)
+      let splitData = splitTheData(dataForYear)
       splitData = splitData.map(data => dropAnomalousValues(data))
       const dataset = state.data.concat({
         year,
@@ -166,10 +166,28 @@ function parseValues (data, year) {
     })
 }
 
-function splitContiguousData (data) {
-  // Data should be contiguous and separated in hourly intervals.
+function splitTheData (data) {
+  // Split data if samples are > 24 hours apart. Data should be contiguous and
+  // separated in hourly intervals. However stations often drop a few samples
+  // and DST also causes a gap that we do not want to split on.
   const splits = []
   let i = 0
+
+  const isCloseToPreviousSample = idx => {
+    const prevPlus24 = global.moment(data[idx - 1].t).add(24, 'hour')
+    const isCloseToPreviousSample = prevPlus24.isSameOrAfter(data[idx].t)
+    if (!isCloseToPreviousSample) {
+      const diff = global.moment.duration(
+        global.moment(data[idx].t).diff(global.moment(data[idx - 1].t))
+      )
+      debug(
+        `Gap detected: ${data[idx - 1].t} -> ${data[idx].t} - ${diff.as(
+          'hours'
+        )}`
+      )
+    }
+    return isCloseToPreviousSample
+  }
 
   do {
     const chunk = []
@@ -177,13 +195,7 @@ function splitContiguousData (data) {
       chunk.push(data[i])
     }
     i++
-    while (
-      i < data.length &&
-      global
-        .moment(data[i - 1].t)
-        .add(1, 'hour')
-        .isSame(data[i].t)
-    ) {
+    while (i < data.length && isCloseToPreviousSample(i)) {
       chunk.push(data[i])
       i++
     }
@@ -253,17 +265,31 @@ function getOverallMax (data) {
 
 function detectPartial (data, year) {
   if (!data || data.length !== 1 || data[0].length === 0) {
+    debug(
+      `Partial data detected for ${year}: ${
+        !data
+          ? 'no data'
+          : data.length !== 1
+            ? 'split data'
+            : data[0].length === 0
+              ? 'no data'
+              : '?'
+      }`
+    )
     return true
   }
   const first = global.moment(data[0][0].t)
   var start = first.clone().startOf('year')
-  var end = first.clone().endOf('year')
+  var end = first
+    .clone()
+    .endOf('year')
+    .subtract(1, 'hour')
   const last = global.moment(data[0][data[0].length - 1].t)
   if (!start.isSame(first)) {
     debug(`the data for ${year} did not begin at the start of the year`)
     return true
   }
-  if (!end.isSame(last)) {
+  if (!end.isBefore(last)) {
     debug(`the data for ${year} did not end at the end of the year`)
     return true
   }

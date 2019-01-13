@@ -87,7 +87,7 @@ describe('coOps reducer', () => {
       expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([])
     })
 
-    it('drops data - anomolous I', () => {
+    it('drops data - anomalous I', () => {
       store.dispatch(
         coOpsActions.dataFetched('2016', [
           { t: '2016-01-01 00:00', v: '51.5', f: '0,0,0' },
@@ -100,7 +100,7 @@ describe('coOps reducer', () => {
       ])
     })
 
-    it('drops data - anomolous II', () => {
+    it('drops data - anomalous II', () => {
       store.dispatch(
         coOpsActions.dataFetched('2016', [
           { t: '2016-01-01 00:00', v: '51.5', f: '0,0,0' },
@@ -113,7 +113,7 @@ describe('coOps reducer', () => {
       ])
     })
 
-    it('drops data - anomolous III', () => {
+    it('drops data - anomalous III', () => {
       store.dispatch(
         coOpsActions.dataFetched('2016', [
           { t: '2016-01-01 00:00', v: '88.5', f: '0,0,0' },
@@ -153,16 +153,16 @@ describe('coOps reducer', () => {
       expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([])
     })
 
-    it('stores multiple data sets for non contiguous graphs', () => {
+    it('stores multiple data sets for non contiguous graphs - gap > 24 hours', () => {
       store.dispatch(
         coOpsActions.dataFetched('2016', [
           { t: '2016-01-01 00:00', v: '51.5', f: '0,0,0' },
-          { t: '2016-01-02 00:00', v: '51.5', f: '0,0,0' }
+          { t: '2016-01-02 01:00', v: '51.5', f: '0,0,0' }
         ])
       )
       expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([
         [{ t: '2016-01-01 00:00', v: 51.5 }],
-        [{ t: '2016-01-02 00:00', v: 51.5 }]
+        [{ t: '2016-01-02 01:00', v: 51.5 }]
       ])
     })
 
@@ -186,23 +186,43 @@ describe('coOps reducer', () => {
       expect(fromCoOps.getData(store.getState(), '2016').max).to.equal(52.5)
     })
 
-    it('spots partialness - gap at beginning', () => {
+    it('spots complete data', () => {
+      let thisFullYear = [...fullYear]
+      store.dispatch(coOpsActions.dataFetched('2016', thisFullYear))
+      expect(fromCoOps.getData(store.getState(), '2016').partial).to.be.false
+    })
+
+    it('spots partial data - gap at beginning', () => {
       let thisFullYear = [...fullYear]
       thisFullYear.shift()
       store.dispatch(coOpsActions.dataFetched('2016', thisFullYear))
       expect(fromCoOps.getData(store.getState(), '2016').partial).to.be.true
     })
 
-    it('spots partialness - gap at end', () => {
+    it('spots partial data - gap at end', () => {
       let thisFullYear = [...fullYear]
       thisFullYear.pop()
       store.dispatch(coOpsActions.dataFetched('2016', thisFullYear))
       expect(fromCoOps.getData(store.getState(), '2016').partial).to.be.true
     })
 
-    it('spots partialness - splits', () => {
+    it('does not split for a single drop', () => {
       let thisFullYear = [...fullYear]
       thisFullYear.splice(100, 1)
+      store.dispatch(coOpsActions.dataFetched('2016', thisFullYear))
+      expect(fromCoOps.getData(store.getState(), '2016').partial).to.be.false
+    })
+
+    it('does not split for <= 24 hour drop', () => {
+      let thisFullYear = [...fullYear]
+      thisFullYear.splice(100, 23)
+      store.dispatch(coOpsActions.dataFetched('2016', thisFullYear))
+      expect(fromCoOps.getData(store.getState(), '2016').partial).to.be.false
+    })
+
+    it('spots partial data - splits when > 24 hour drop', () => {
+      let thisFullYear = [...fullYear]
+      thisFullYear.splice(100, 24)
       store.dispatch(coOpsActions.dataFetched('2016', thisFullYear))
       expect(fromCoOps.getData(store.getState(), '2016').partial).to.be.true
     })

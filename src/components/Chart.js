@@ -8,6 +8,7 @@ import * as d3Scale from 'd3-scale'
 import { timeFormat as d3TimeFormat } from 'd3-time-format'
 
 import './Chart.scss'
+const debug = window.debug('components/Chart')
 
 export function scaleChart (ToScale) {
   class Scaled extends React.Component {
@@ -30,12 +31,17 @@ export function scaleChart (ToScale) {
 
       const pointsToDisplay = Math.floor(width / pxPerPoint)
 
+      debug(`Points to display: ${pointsToDisplay}`)
+
       const downsampled = data.map(yearData => {
         const datumTotalCount = yearData.data.reduce(
           (acc, chunk) => acc + chunk.length,
           0
         )
         const downsampleCount = Math.ceil(datumTotalCount / pointsToDisplay)
+
+        debug(`Total datum count: ${datumTotalCount}`)
+        debug(`Downsample window size: ${downsampleCount}`)
 
         if (downsampleCount <= 1) {
           return yearData
@@ -46,6 +52,12 @@ export function scaleChart (ToScale) {
         thisYearData.data = thisYearData.data
           .map(chunk => this.downsampleChunk(chunk, downsampleCount))
           .filter(chunk => chunk.length > 0)
+
+        const reducedDatumCount = thisYearData.data.reduce(
+          (acc, chunk) => acc + chunk.length,
+          0
+        )
+        debug(`Reduced datum count: ${reducedDatumCount}`)
 
         return thisYearData
       })
