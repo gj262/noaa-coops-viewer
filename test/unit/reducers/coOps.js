@@ -87,6 +87,15 @@ describe('coOps reducer', () => {
       expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([])
     })
 
+    it('drops data - frozen', () => {
+      store.dispatch(
+        coOpsActions.dataFetched('2016', [
+          { t: '2016-01-01 00:00', v: '7', f: '0,0,0' }
+        ])
+      )
+      expect(fromCoOps.getData(store.getState(), '2016').data).to.deep.equal([])
+    })
+
     it('drops data - anomalous I', () => {
       store.dispatch(
         coOpsActions.dataFetched('2016', [

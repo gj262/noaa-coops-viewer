@@ -60,7 +60,7 @@ export default createReducer(
       return Object.assign({}, state, { isFetching: true, errors: [] })
     },
     [DATA_FETCHED]: (state, [year, dataForYear]) => {
-      dataForYear = parseValues(dataForYear, year)
+      dataForYear = parseAndFixValues(dataForYear, year)
       let splitData = splitTheData(dataForYear)
       splitData = splitData.map(data => dropAnomalousValues(data))
       splitData.forEach(data => {
@@ -135,7 +135,7 @@ export default createReducer(
   }
 )
 
-function parseValues (data, year) {
+function parseAndFixValues (data, year) {
   data = data || []
 
   const hourRe = /[012]\d:00$/
@@ -155,6 +155,9 @@ function parseValues (data, year) {
         }
         try {
           datum.v = parseFloat(datum.v)
+          if (datum.v < 31.0) {
+            throw new Error('Frozen!')
+          }
         } catch (e) {
           return false
         }
