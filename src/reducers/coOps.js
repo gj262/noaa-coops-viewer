@@ -63,6 +63,9 @@ export default createReducer(
       dataForYear = parseValues(dataForYear, year)
       let splitData = splitTheData(dataForYear)
       splitData = splitData.map(data => dropAnomalousValues(data))
+      splitData.forEach(data => {
+        data.forEach(datum => delete datum.tAsDate)
+      })
       const dataset = state.data.concat({
         year,
         data: splitData,
@@ -162,7 +165,7 @@ function parseValues (data, year) {
       return false
     })
     .map(datum => {
-      return { v: datum.v, t: datum.t }
+      return { v: datum.v, t: datum.t, tAsDate: new Date(datum.t) }
     })
 }
 
@@ -174,8 +177,8 @@ function splitTheData (data) {
   let i = 0
 
   const isCloseToPreviousSample = idx => {
-    const prevPlus24 = global.moment(data[idx - 1].t).add(24, 'hour')
-    const isCloseToPreviousSample = prevPlus24.isSameOrAfter(data[idx].t)
+    const prevPlus24 = data[idx - 1].tAsDate.getTime() + 24 * 60 * 60 * 1000
+    const isCloseToPreviousSample = prevPlus24 >= data[idx].tAsDate.getTime()
     if (!isCloseToPreviousSample) {
       const diff = global.moment.duration(
         global.moment(data[idx].t).diff(global.moment(data[idx - 1].t))
