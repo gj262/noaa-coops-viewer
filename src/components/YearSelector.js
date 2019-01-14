@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import { MIN, MAX } from 'reducers/coOps'
 
 import './YearSelector.scss'
 
@@ -47,14 +46,13 @@ export default class YearSelector extends React.Component {
                   />
                 </td>
                 <td>
-                  {yearData.year} {yearData.partial ? <sup>p</sup> : null}{' '}
-                  {yearData.bogus ? <sup>b</sup> : null}
+                  {yearData.year} {yearData.partial ? <sup>p</sup> : null}
                 </td>
                 <td style={this.minValueStyle(yearData)}>
-                  {yearData[MIN].min.toFixed(2)}
+                  {yearData.min ? yearData.min.toFixed(2) : '-'}
                 </td>
                 <td style={this.maxValueStyle(yearData)}>
-                  {yearData[MAX].max.toFixed(2)}
+                  {yearData.max ? yearData.max.toFixed(2) : '-'}
                 </td>
               </tr>
             ))}
@@ -63,9 +61,6 @@ export default class YearSelector extends React.Component {
         </table>
         <span>
           <sup>p</sup> only partial data is available for these years.
-        </span>
-        <span>
-          <sup>b</sup> these years have wildly different data from the norm.
         </span>
       </div>
     )
@@ -110,7 +105,7 @@ export default class YearSelector extends React.Component {
     if (yearData.partial) {
       return {}
     }
-    var index = Math.floor(4 * yearData[MIN].heatIndex)
+    var index = Math.floor(4 * yearData.minHeatIndex)
     return {
       background: [
         'rgb(60,160,240)',
@@ -126,7 +121,7 @@ export default class YearSelector extends React.Component {
     if (yearData.partial) {
       return {}
     }
-    var index = Math.floor(4 * yearData[MAX].heatIndex)
+    var index = Math.floor(4 * yearData.maxHeatIndex)
     return {
       background: [
         'rgb(255,232,120)',

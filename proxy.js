@@ -75,7 +75,7 @@ if (cache && !cache.isDirectory()) {
 
 app.all('/api/*', function (req, res, next) {
   console.log('Got an API call')
-  if (isInCache(req.originalUrl)) {
+  if (isInCache(req.originalUrl) && validJSON(req.originalUrl)) {
     console.log('Using cached data for ' + req.originalUrl)
     respondWithCachedData(req.originalUrl, res)
   } else {
@@ -93,7 +93,10 @@ app.use(
       return req.originalUrl
     },
     userResDecorator: function (proxyRes, proxyResData, userReq, userRes) {
-      if (!isInCache(userReq.originalUrl) && shouldCache(userReq.originalUrl)) {
+      if (
+        !isInCache(userReq.originalUrl) &&
+        shouldCache(userReq.originalUrl, proxyResData)
+      ) {
         console.log('Caching ' + userReq.originalUrl)
         addToCache(userReq.originalUrl, proxyResData)
       }
@@ -119,7 +122,18 @@ function isInCache (url) {
   return true
 }
 
-function shouldCache (url) {
+function validJSON (url) {
+  var data = fs.readFileSync(cachePath(url))
+  try {
+    JSON.parse(data)
+  } catch (e) {
+    console.log('The cached data is not valid JSON')
+    return false
+  }
+  return true
+}
+
+function shouldCache (url, data) {
   // Don't cache the current year
   // Look a day behind and ahead to avoid time difference issues with browser and proxy
   var yesterdayYear = Moment()
@@ -136,13 +150,20 @@ function shouldCache (url) {
     console.log(`Not caching ${url}`)
     return false
   }
+  // Don't cache non JSON
+  try {
+    JSON.parse(data)
+  } catch (e) {
+    console.log('A non JSON data response - do not cache')
+    return false
+  }
   return true
 }
 
 function addToCache (url, data) {
-  var tmppath = temp.path({ dir: options.cache, suffix: '.tmp' })
-  fs.writeFileSync(tmppath, data)
-  fs.rename(tmppath, cachePath(url))
+  var tmpPath = temp.path({ dir: options.cache, suffix: '.tmp' })
+  fs.writeFileSync(tmpPath, data)
+  fs.rename(tmpPath, cachePath(url))
 }
 
 function respondWithCachedData (url, res) {

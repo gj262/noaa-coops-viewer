@@ -56,7 +56,8 @@ export const actions = {
   toggleYearSelection,
   selectStationID,
   setHoverYear,
-  clearHoverYear
+  clearHoverYear,
+  dataFetched
 }
 
 function prefetchFromYear (year, dispatch, getState) {
@@ -104,62 +105,13 @@ function fetchOne (year, station, done) {
       if ('error' in json) {
         return done(null, fetchError(year, json.error.message))
       }
-      done(dropAnomalousValues(parseValues(json.data)), null)
+      done(json.data, null)
     })
     .catch(error => {
       console.log('request failed', error)
       return done(null, fetchError(year, 'Failed to fetch data'))
     })
 }
-
-function parseValues (data) {
-  data = data || []
-  return data.filter(datum => {
-    if ('t' in datum && 'v' in datum && datum.v) {
-      // // TEST
-      // if (datum.t > '2015-07-11') {
-      //   return false;
-      // }
-      // // END TEST
-      try {
-        datum.v = parseFloat(datum.v)
-      } catch (e) {
-        return false
-      }
-      return true
-    }
-    return false
-  })
-}
-
-const VARIANCE = 5.0
-
-function dropAnomalousValues (data) {
-  // Compare each datum to two neighbors and drop if the value is too
-  // different.
-  if (data.length < 3) {
-    return data
-  }
-  return data.filter((datum, idx) => {
-    var n1 = idx - 1
-    var n2 = idx + 1
-    if (n1 < 0) {
-      n1 = n2 + 1
-    }
-    if (n2 >= data.length) {
-      n2 = n1 - 1
-    }
-    if (
-      Math.abs(datum.v - data[n1].v) > VARIANCE &&
-      Math.abs(datum.v - data[n2].v) > VARIANCE
-    ) {
-      console.warn(`Dropping variant datum ${datum.t} ${datum.v}`)
-      return false
-    }
-    return true
-  })
-}
-
 function makeLocation (state, change) {
   const query = {
     stn: state.selectedStationID,

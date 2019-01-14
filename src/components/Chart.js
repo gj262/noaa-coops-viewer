@@ -4,14 +4,92 @@ import { VictoryAxis } from 'victory-axis'
 import { VictoryChart } from 'victory-chart'
 import { Curve } from 'victory-line'
 import { StaticVictoryLine } from 'components/StaticVictory'
-import { MIN, MAX } from 'reducers/coOps'
 import * as d3Scale from 'd3-scale'
 import { timeFormat as d3TimeFormat } from 'd3-time-format'
 
 import './Chart.scss'
+const debug = window.debug('components/Chart')
 
-export default class Chart extends React.Component {
+export function scaleChart (ToScale) {
+  class Scaled extends React.Component {
+    static propTypes = {
+      pxPerPoint: PropTypes.number.isRequired,
+      width: PropTypes.number.isRequired,
+      data: PropTypes.array.isRequired
+    }
+
+    render () {
+      return <ToScale {...this.props} data={this.downsample()} />
+    }
+
+    downsample () {
+      const { data, pxPerPoint, width } = this.props
+
+      if (!pxPerPoint || !width) {
+        return data
+      }
+
+      const pointsToDisplay = Math.floor(width / pxPerPoint)
+
+      debug(`Points to display: ${pointsToDisplay}`)
+
+      const downsampled = data.map(yearData => {
+        const datumTotalCount = yearData.data.reduce(
+          (acc, chunk) => acc + chunk.length,
+          0
+        )
+        const downsampleCount = Math.ceil(datumTotalCount / pointsToDisplay)
+
+        debug(`Total datum count: ${datumTotalCount}`)
+        debug(`Downsample window size: ${downsampleCount}`)
+
+        if (downsampleCount <= 1) {
+          return yearData
+        }
+
+        const thisYearData = { ...yearData }
+
+        thisYearData.data = thisYearData.data
+          .map(chunk => this.downsampleChunk(chunk, downsampleCount))
+          .filter(chunk => chunk.length > 0)
+
+        const reducedDatumCount = thisYearData.data.reduce(
+          (acc, chunk) => acc + chunk.length,
+          0
+        )
+        debug(`Reduced datum count: ${reducedDatumCount}`)
+
+        return thisYearData
+      })
+
+      return downsampled
+    }
+
+    downsampleChunk (chunk, downsampleCount) {
+      let thisChunk = [...chunk]
+      let downsampled = []
+      const sampleMidPoint = Math.floor(downsampleCount / 2)
+      while (thisChunk.length >= sampleMidPoint) {
+        const sample = thisChunk.splice(0, downsampleCount)
+        const average =
+          sample.reduce((acc, datum) => acc + datum.v, 0) / sample.length
+        const indexForSampleTime =
+          sampleMidPoint < sample.length ? sampleMidPoint : sample.length - 1
+        downsampled.push({
+          v: average,
+          t: sample[indexForSampleTime].t
+        })
+      }
+      return downsampled
+    }
+  }
+
+  return Scaled
+}
+
+class Chart extends React.Component {
   static propTypes = {
+    /* eslint-disable react/no-unused-prop-types */
     linePalette: PropTypes.array,
     data: PropTypes.array,
     years: PropTypes.array,
@@ -130,15 +208,19 @@ export default class Chart extends React.Component {
     ]
   }
 
-  constructor () {
-    super()
+  constructor (props) {
+    super(props)
+
+    var yTicks = this.makeYTicks(props.data)
+    var yDomain = this.makeYDomain(yTicks)
+
     this.state = {
-      chartData: [],
-      availableYears: [],
+      chartData: this.makeChartData(props),
+      availableYears: this.makeAvailableYears(props),
+      yTicks,
+      yDomain,
       xTicks: this.makeXTicks(),
-      xDomain: this.makeXDomain(),
-      yTicks: [],
-      yDomain: []
+      xDomain: this.makeXDomain()
     }
   }
 
@@ -169,37 +251,35 @@ export default class Chart extends React.Component {
   }
 
   componentWillReceiveProps (nextProps) {
-    // Map to display data as new data is received.
-    var chartData = nextProps.data.map(dataset => {
-      var chartDataset = Object.assign({}, dataset)
-      var colorIdx = dataset.year % this.props.linePalette.length
-      chartDataset.color = this.props.linePalette[colorIdx]
-      chartDataset.visible =
-        nextProps.years.indexOf(dataset.year) !== -1 ||
-        nextProps.hoverYear === dataset.year
-      chartDataset.mouseover = nextProps.hoverYear === dataset.year
-      chartDataset.thin = !chartDataset.visible && !chartDataset.bogus
-      return chartDataset
-    })
-
-    var availableYears = this.state.availableYears
-    nextProps.data.forEach(dataset => {
-      if (availableYears.indexOf(dataset.year) === -1) {
-        availableYears = availableYears
-          .concat(dataset.year)
-          .sort((a, b) => b - a)
-      }
-    })
-
     var yTicks = this.makeYTicks(nextProps.data)
     var yDomain = this.makeYDomain(yTicks)
 
     this.setState({
-      chartData,
-      availableYears,
+      chartData: this.makeChartData(nextProps),
+      availableYears: this.makeAvailableYears(nextProps),
       yTicks,
       yDomain
     })
+  }
+
+  makeChartData (props) {
+    return props.data.map(yearData => {
+      var chartYearData = Object.assign({}, yearData)
+      var colorIdx = yearData.year % props.linePalette.length
+      chartYearData.color = props.linePalette[colorIdx]
+      chartYearData.visible =
+        props.years.indexOf(yearData.year) !== -1 ||
+        props.hoverYear === yearData.year
+      chartYearData.mouseover = props.hoverYear === yearData.year
+      chartYearData.thin = !chartYearData.visible && !chartYearData.bogus
+      return chartYearData
+    })
+  }
+
+  makeAvailableYears (props) {
+    var availableYears = props.data.map(yearData => yearData.year)
+
+    return availableYears.sort((a, b) => b - a)
   }
 
   makeYTicks (data) {
@@ -209,13 +289,13 @@ export default class Chart extends React.Component {
     var min
     var max
     data
-      .filter(dataset => !dataset.bogus)
-      .forEach(dataset => {
-        if (!min || dataset[MIN].min < min) {
-          min = dataset[MIN].min
+      .filter(yearData => !yearData.bogus)
+      .forEach(yearData => {
+        if (!min || yearData.min < min) {
+          min = yearData.min
         }
-        if (!max || dataset[MAX].max > max) {
-          max = dataset[MAX].max
+        if (!max || yearData.max > max) {
+          max = yearData.max
         }
       })
     var ticks = []
@@ -261,8 +341,9 @@ export default class Chart extends React.Component {
       >
         {this.renderYAxis()}
         {this.renderXAxis()}
-        {this.state.chartData.map(dataset => this.renderLine(dataset, MIN))}
-        {this.state.chartData.map(dataset => this.renderLine(dataset, MAX))}
+        {this.state.chartData.map(yearData =>
+          this.renderLinesForYear(yearData)
+        )}
       </VictoryChart>
     )
   }
@@ -289,50 +370,58 @@ export default class Chart extends React.Component {
     )
   }
 
-  renderLine (dataset, bound) {
-    var instanceKey =
-      this.props.selectedStationID +
-      dataset.year +
-      bound +
-      this.state.yTicks[0] +
-      this.state.yTicks[this.state.yTicks.length - 1]
+  renderLinesForYear (yearData) {
+    return yearData.data.map((chunk, idx) => {
+      var instanceKey =
+        this.props.selectedStationID +
+        yearData.year +
+        idx +
+        this.state.yTicks[0] +
+        this.state.yTicks[this.state.yTicks.length - 1]
 
-    return (
-      <StaticVictoryLine
-        key={instanceKey}
-        updateAttrs={`${dataset.visible} ${dataset.thin} ${dataset.mouseover} ${
-          this.state.yTicks[0]
-        } ${this.state.yTicks[this.state.yTicks.length - 1]}`}
-        range={[
-          this.state.yTicks[0],
-          this.state.yTicks[this.state.yTicks.length - 1]
-        ]}
-        interpolation='natural'
-        data={dataset[bound].data}
-        style={{
-          data: this.getLineStyle(dataset),
-          label: { color: dataset.color }
-        }}
-        dataComponent={
-          <Curve
-            events={{
-              onMouseOver: () => this.props.setHoverYear(dataset.year),
-              onMouseOut: () => this.props.clearHoverYear()
-            }}
-          />
-        }
-      />
-    )
+      return (
+        <StaticVictoryLine
+          key={instanceKey}
+          updateAttrs={`${yearData.visible} ${yearData.thin} ${
+            yearData.mouseover
+          } ${this.state.yTicks[0]} ${
+            this.state.yTicks[this.state.yTicks.length - 1]
+          }`}
+          range={[
+            this.state.yTicks[0],
+            this.state.yTicks[this.state.yTicks.length - 1]
+          ]}
+          interpolation='linear'
+          data={chunk}
+          x={d => new Date('2012' + d.t.substr(4))}
+          y='v'
+          style={{
+            data: this.getLineStyle(yearData),
+            label: { color: yearData.color }
+          }}
+          dataComponent={
+            <Curve
+              events={{
+                onMouseOver: () => this.props.setHoverYear(yearData.year),
+                onMouseOut: () => this.props.clearHoverYear()
+              }}
+            />
+          }
+        />
+      )
+    })
   }
 
-  getLineStyle (dataset) {
+  getLineStyle (yearData) {
     return {
-      stroke: dataset.mouseover
+      stroke: yearData.mouseover
         ? '#000000'
-        : dataset.visible
-          ? dataset.color
+        : yearData.visible
+          ? yearData.color
           : 'lightGrey',
-      strokeWidth: dataset.visible ? 2 : dataset.thin ? 0.5 : 0
+      strokeWidth: yearData.visible ? 2 : yearData.thin ? 0.5 : 0
     }
   }
 }
+
+export default scaleChart(Chart)
